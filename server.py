@@ -98,7 +98,8 @@ class CharacterStore:
         with self.lock:
             characters = self._read()
             self._check_unique_name(characters, character)
-            character = {"id": uuid.uuid4().hex, **character, "updatedAt": utc_now()}
+            now = utc_now()
+            character = {"id": uuid.uuid4().hex, **character, "updatedAt": now, "levelReachedAt": now}
             characters.append(character)
             self._write(characters)
             return character
@@ -117,6 +118,10 @@ class CharacterStore:
             updated_at = utc_now() if changed else old.get("updatedAt")
             sync_fields = {key: old[key] for key in SYNC_ONLY_FIELDS if key in old}
             characters[index] = {"id": character_id, **character, **sync_fields}
+            # When the character reached its current level; used to order characters of the same level.
+            level_reached = utc_now() if old.get("level") != character["level"] else old.get("levelReachedAt")
+            if level_reached:
+                characters[index]["levelReachedAt"] = level_reached
             if updated_at:
                 characters[index]["updatedAt"] = updated_at
             self._write(characters)
@@ -132,6 +137,8 @@ class CharacterStore:
                 if not fields:
                     continue  # deleted meanwhile, or nothing from Blizzard
                 game_changed = any(c.get(k) != v for k, v in fields.items() if k not in SYNC_ONLY_FIELDS)
+                if "level" in fields and c.get("level") != fields["level"]:
+                    c["levelReachedAt"] = utc_now()
                 if any(c.get(k) != v for k, v in fields.items()):
                     c.update(fields)
                     changed = True

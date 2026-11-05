@@ -20,6 +20,7 @@ A page listing World of Warcraft: Forever characters, served at https://imbulfor
   - `PUT /admin/api/characters/{id}`: updates a character (same validation)
   - `DELETE /admin/api/characters/{id}`: deletes a character
 - **Data:** characters are stored in one JSON file (`/var/lib/imbulforever/characters.json` on the server). On first start it is seeded from `characters.json` in the repo; after that, deploys never overwrite it.
+- **Sorting:** highest level first; within a level, whoever reached it first (`levelReachedAt`, recorded when the level changes through the admin page or the Blizzard sync; characters without it count as earliest), then by name.
 - **Access control:** Caddy protects `/admin*` (the admin page and the write API) with basic auth. The API itself only listens on `127.0.0.1`.
 
 ## Local preview

@@ -62,8 +62,13 @@ function loadCharacters() {
   return fetchJson("/api/characters");
 }
 
+// Highest level first; within a level, whoever reached it first. Characters without a recorded time
+// (they reached their level before it was tracked) count as earliest; then by name.
 function sortCharacters(characters) {
-  return characters.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name, "hu"));
+  return characters.sort((a, b) =>
+    b.level - a.level
+    || (a.levelReachedAt || "").localeCompare(b.levelReachedAt || "")
+    || a.name.localeCompare(b.name, "hu"));
 }
 
 function cell(text, className) {
