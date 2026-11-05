@@ -176,10 +176,7 @@ async function renderCharacterTable(tbody, countEl, gameData, renderActions, { k
     } else {
       tbody.replaceChildren(...characters.map((c) => renderCharacterRow(c, gameData, renderActions)));
     }
-    countEl.replaceChildren(`${characters.length} karakter`);
-    // Time of the last Blizzard sync, if the sync is running.
-    const status = await fetchJson("/api/status").catch(() => null);
-    if (status && status.lastSync) countEl.append(" · frissítve: ", relativeTime(status.lastSync));
+    countEl.textContent = `${characters.length} karakter`;
     return characters;
   } catch (error) {
     console.error("Failed to load characters", error);

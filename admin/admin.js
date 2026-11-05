@@ -133,19 +133,6 @@ async function main() {
     return button;
   }
 
-  // Characters found in the Blizzard API get a badge; their game data is overwritten by the sync.
-  function markBlizzardRows() {
-    for (const row of tbody.rows) {
-      const character = charactersById.get(row.dataset.id);
-      if (!character || !character.blizzard || row.querySelector(".source-badge")) continue;
-      const badge = document.createElement("span");
-      badge.className = "source-badge tooltip";
-      badge.dataset.tooltip = "Az adatok a Blizzard API-ból frissülnek";
-      badge.textContent = "Blizzard";
-      row.cells[0].append(" ", badge);
-    }
-  }
-
   function renderActions(character) {
     const td = document.createElement("td");
     td.className = "actions";
@@ -156,12 +143,8 @@ async function main() {
     return td;
   }
 
-  let charactersById = new Map();
-
   async function refreshTable(options) {
-    const characters = await renderCharacterTable(tbody, count, gameData, renderActions, options);
-    if (characters.length) charactersById = new Map(characters.map((c) => [c.id, c]));
-    markBlizzardRows();
+    await renderCharacterTable(tbody, count, gameData, renderActions, options);
     highlightEditedRow();
   }
 

@@ -387,21 +387,9 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* Last login column */
 .last-login { color: var(--muted); font-size: .9rem; white-space: nowrap; }
-.last-login .tooltip, .count .tooltip { cursor: default; }
+.last-login .tooltip { cursor: default; }
 
-/* Admin: Blizzard source badge and note */
-.source-badge {
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: #13263a;
-  color: #7cc6fe;
-  font-size: .7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  vertical-align: middle;
-}
-
+/* Admin: note when editing a character synced from Blizzard */
 .sync-note {
   margin: -8px 0 16px;
   color: var(--muted);
