@@ -75,6 +75,7 @@ function renderCharacterRow(character, gameData, renderActions) {
   const factionName = gameData.factions[character.faction];
   tr.append(
     cell(`${character.name} ${character.surname}`, "name"),
+    cell(character.owner || "", "owner"),
     factionName ? iconCell(`/icons/faction/${character.faction}.jpg`, factionName) : cell(""),
     iconCell(`/icons/class/${character.class}.jpg`, cls.name),
     cell(String(character.level), "num"),

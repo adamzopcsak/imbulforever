@@ -355,3 +355,6 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 }
 
 .profession-option:hover img { filter: grayscale(.3) brightness(.85); }
+
+/* Free-text owner ("Kié") column */
+.owner { color: var(--muted); }

@@ -24,6 +24,7 @@ from pathlib import Path
 APP_DIR = Path(__file__).resolve().parent
 MAX_BODY_BYTES = 10_000
 MAX_NAME_LENGTH = 24
+MAX_OWNER_LENGTH = 40
 
 GAME_DATA = json.loads((APP_DIR / "game-data.json").read_text(encoding="utf-8"))
 
@@ -125,9 +126,17 @@ def validate_character(data: object) -> dict:
     if len(primary) > GAME_DATA["maxPrimaryProfessions"]:
         raise ValueError(f"Legfeljebb {GAME_DATA['maxPrimaryProfessions']} fő szakma választható.")
 
+    owner = data.get("owner", "")
+    if not isinstance(owner, str):
+        raise ValueError("Hibás kérés.")
+    owner = " ".join(owner.split())  # trim and collapse whitespace
+    if len(owner) > MAX_OWNER_LENGTH:
+        raise ValueError(f"A „Kié” mező legfeljebb {MAX_OWNER_LENGTH} karakter lehet.")
+
     return {
         "name": name_field("name", "név"),
         "surname": name_field("surname", "vezetéknév"),
+        "owner": owner,
         "class": choice("class", "kaszt", GAME_DATA["classes"]),
         "level": level,
         "role": choice("role", "szerep", GAME_DATA["roles"]),
@@ -179,7 +188,7 @@ class Handler(SimpleHTTPRequestHandler):
             return None
         try:
             return validate_character(json.loads(self.rfile.read(length)))
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Hibás kérés."})
         except ValueError as error:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
