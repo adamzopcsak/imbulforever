@@ -71,10 +71,56 @@ function renderGear(character) {
     const meta = [item.slotName, item.type, item.itemLevel ? `ilvl ${item.itemLevel}` : ""].filter(Boolean).join(" · ");
     text.append(el("div", "gear-meta", meta));
     li.append(img, text);
+    if (item.tooltip) {
+      li.tabIndex = 0; // focus (tap on a phone) also shows the tooltip
+      li.classList.add("has-tooltip");
+      li.append(itemTooltip(item));
+    }
     list.append(li);
   }
   section.append(list);
   return section;
+}
+
+// A row with text on the left and optional text on the right, like "Chest      Mail".
+function tooltipRow(left, right, className) {
+  const row = el("div", `tt-row${className ? ` ${className}` : ""}`);
+  row.append(el("span", null, left || ""));
+  if (right) row.append(el("span", "tt-right", right));
+  return row;
+}
+
+// In-game style item tooltip from the lines the Blizzard sync stored (see blizzard.tooltip_from_item).
+function itemTooltip(item) {
+  const t = item.tooltip;
+  const box = el("div", "item-tooltip");
+  box.setAttribute("role", "tooltip");
+  box.append(el("div", `tt-name quality-${item.quality}`, item.name));
+  if (item.itemLevel) box.append(el("div", "tt-ilvl", `Item Level ${item.itemLevel}`));
+  if (t.binding) box.append(el("div", null, t.binding));
+  if (t.inventoryType || t.subclass) box.append(tooltipRow(t.inventoryType, t.subclass));
+  if (t.damage || t.speed) box.append(tooltipRow(t.damage, t.speed));
+  if (t.dps) box.append(el("div", null, t.dps));
+  if (t.armor) box.append(el("div", null, t.armor));
+  for (const stat of t.stats || []) {
+    const line = el("div", null, stat.text);
+    if (stat.color) line.style.color = stat.color;
+    box.append(line);
+  }
+  for (const enchant of t.enchantments || []) box.append(el("div", "tt-green", enchant));
+  if (t.durability) box.append(el("div", null, t.durability));
+  if (t.requirement) box.append(el("div", null, t.requirement));
+  for (const spell of t.spells || []) box.append(el("div", "tt-green", spell));
+  if (t.description) box.append(el("div", "tt-description", `"${t.description}"`));
+
+  const price = t.sellPrice || {};
+  const coins = [["gold", "g"], ["silver", "s"], ["copper", "c"]].filter(([key]) => price[key]);
+  if (coins.length) {
+    const line = el("div", "tt-price", "Sell Price: ");
+    for (const [key, unit] of coins) line.append(el("span", `coin coin-${key}`, `${price[key]}${unit}`), " ");
+    box.append(line);
+  }
+  return box;
 }
 
 function renderCharacter(container, character, gameData) {
@@ -125,6 +171,8 @@ async function main() {
         container.replaceChildren(el("p", "empty", "Ez a karakter nincs a listán."));
         return;
       }
+      // Don't redraw under an open item tooltip; the next refresh catches up.
+      if (keepOnError && container.querySelector(".gear-item:hover, .gear-item:focus")) return;
       renderCharacter(container, character, gameData);
     } catch (error) {
       console.error("Failed to load the character", error);
