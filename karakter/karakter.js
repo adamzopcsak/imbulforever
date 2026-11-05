@@ -73,7 +73,7 @@ function renderGear(character) {
     const grade = itemLevelGrade(average, character.level);
     const value = el("span", `ilvl-value tooltip quality-${grade.quality}`, String(average));
     value.dataset.tooltip = grade.text;
-    const label = el("span", "count", "átlagos item level: ");
+    const label = el("span", "count", "item level: ");
     label.append(value);
     head.append(label);
   }
