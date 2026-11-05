@@ -35,7 +35,7 @@ MAX_NAME_LENGTH = 24
 MAX_OWNER_LENGTH = 40
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
-SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild")
+SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment")
 # Old roleset values -> current ones.
 ROLE_MIGRATIONS = {"pve": "normal"}
 
@@ -337,7 +337,7 @@ def main() -> None:
     client_id, client_secret = os.environ.get("BNET_CLIENT_ID"), os.environ.get("BNET_CLIENT_SECRET")
     if client_id and client_secret:
         client = blizzard.BlizzardClient(client_id, client_secret, os.environ.get("BNET_REGION", "eu"))
-        sync = blizzard.BlizzardSync(store, client, GAME_DATA)
+        sync = blizzard.BlizzardSync(store, client, GAME_DATA, args.data.parent / "item-icons.json")
         sync.start()
         print("Blizzard sync started", flush=True)
     else:

@@ -9,6 +9,8 @@ the character simply keeps what it had.
 
 import base64
 import json
+import os
+import tempfile
 import threading
 import time
 import urllib.error
@@ -60,9 +62,9 @@ class BlizzardClient:
         self._token_expires = time.time() + int(payload.get("expires_in", 3600))
         return self._token
 
-    def get(self, path: str) -> dict | None:
-        """GET a profile resource; returns None on 404, raises on other errors."""
-        url = f"https://{self.region}.api.blizzard.com{path}?namespace={self.namespace}&locale=en_GB"
+    def get(self, path: str, namespace: str | None = None) -> dict | None:
+        """GET an API resource (profile namespace by default); returns None on 404, raises on other errors."""
+        url = f"https://{self.region}.api.blizzard.com{path}?namespace={namespace or self.namespace}&locale=en_GB"
         request = urllib.request.Request(url, headers={"Authorization": "Bearer " + self._get_token()})
         try:
             with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
@@ -113,6 +115,62 @@ def fields_from_profile(profile: dict, game_data: dict) -> dict:
     return fields
 
 
+# Slot order of the in-game character sheet.
+SLOT_ORDER = [
+    "HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "SHIRT", "TABARD", "WRIST",
+    "HANDS", "WAIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "TRINKET_1", "TRINKET_2",
+    "MAIN_HAND", "OFF_HAND", "RANGED", "AMMO",
+]
+
+
+def equipment_from_response(response: dict) -> list:
+    """Equipped items in character-sheet order, reduced to what the character page shows."""
+    items = []
+    for item in response.get("equipped_items", []):
+        slot = item.get("slot") or {}
+        items.append({
+            "slot": slot.get("type", ""),
+            "slotName": slot.get("name", ""),
+            "itemId": (item.get("item") or {}).get("id"),
+            "mediaId": (item.get("media") or {}).get("id"),
+            "mediaNamespace": urllib.parse.parse_qs(
+                urllib.parse.urlparse(((item.get("media") or {}).get("key") or {}).get("href", "")).query
+            ).get("namespace", [""])[0],
+            "name": item.get("name", ""),
+            "quality": ((item.get("quality") or {}).get("type") or "COMMON").lower(),
+            "itemLevel": (item.get("level") or {}).get("value"),
+            "type": (item.get("item_subclass") or {}).get("name", ""),
+        })
+    order = {slot: i for i, slot in enumerate(SLOT_ORDER)}
+    return sorted(items, key=lambda i: order.get(i["slot"], len(order)))
+
+
+class IconCache:
+    """Item icon URLs by media id, kept in a JSON file so each icon is looked up only once."""
+
+    def __init__(self, path):
+        self.path = path
+        try:
+            self.icons = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            self.icons = {}
+
+    def get(self, client: "BlizzardClient", media_id, namespace: str) -> str | None:
+        key = str(media_id)
+        if key not in self.icons and media_id and namespace:
+            media = client.get(f"/data/wow/media/item/{media_id}", namespace)
+            assets = (media or {}).get("assets", [])
+            self.icons[key] = next((a["value"] for a in assets if a.get("key") == "icon"), None)
+            self._save()
+        return self.icons.get(key)
+
+    def _save(self) -> None:
+        fd, tmp = tempfile.mkstemp(dir=self.path.parent, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(self.icons, f)
+        os.replace(tmp, self.path)
+
+
 def professions_from_response(response: dict, game_data: dict) -> list:
     """Primary professions we know, in game-data order."""
     names = {key_from_name((p.get("profession") or {}).get("name", "")) for p in response.get("primaries", [])}
@@ -122,14 +180,18 @@ def professions_from_response(response: dict, game_data: dict) -> list:
 class BlizzardSync:
     """Every `interval` seconds fetch all characters; professions only every `professions_interval` seconds."""
 
-    def __init__(self, store, client: BlizzardClient, game_data: dict, interval: int = 60, professions_interval: int = 900):
+    def __init__(self, store, client: BlizzardClient, game_data: dict, icon_cache_path,
+                 interval: int = 60, professions_interval: int = 900, equipment_interval: int = 300):
         self.store = store
         self.client = client
         self.game_data = game_data
+        self.icons = IconCache(icon_cache_path)
         self.interval = interval
         self.professions_interval = professions_interval
+        self.equipment_interval = equipment_interval
         self.last_sync = None  # ISO time of the last completed sync run
         self._professions_fetched = {}  # character id -> time.time() of the last professions fetch
+        self._equipment_fetched = {}  # character id -> time.time() of the last equipment fetch
 
     def start(self) -> None:
         threading.Thread(target=self._run, name="blizzard-sync", daemon=True).start()
@@ -164,6 +226,16 @@ class BlizzardSync:
             return None
         fields = fields_from_profile(profile, self.game_data)
         fields["blizzard"] = True
+
+        last = self._equipment_fetched.get(character["id"], 0)
+        if time.time() - last >= self.equipment_interval:
+            response = self.client.get(path + "/equipment")
+            self._equipment_fetched[character["id"]] = time.time()
+            if response is not None:
+                equipment = equipment_from_response(response)
+                for item in equipment:
+                    item["icon"] = self.icons.get(self.client, item.pop("mediaId"), item.pop("mediaNamespace"))
+                fields["equipment"] = equipment
 
         last = self._professions_fetched.get(character["id"], 0)
         if time.time() - last >= self.professions_interval:
