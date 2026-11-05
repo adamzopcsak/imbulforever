@@ -76,6 +76,7 @@ const ENGLISH = {
   "Újratöltés": "Reload",
 
   // Character page
+  "← Vissza a listához": "← Back to the list",
   "Utolsó belépés": "Last login",
   "Felszerelés": "Gear",
   "A felszerelés csak a Blizzard által ismert karaktereknél látszik: legalább 10-es szint, és a karakter azóta kilépett a játékból.":
