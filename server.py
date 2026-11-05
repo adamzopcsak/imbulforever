@@ -7,7 +7,7 @@ Endpoints:
   PUT  /admin/api/characters/<id>  update a character (protected the same way)
   DELETE /admin/api/characters/<id>  delete a character (protected the same way)
   GET  /api/tips                   the tips, the one shown now and when the next one comes (every hour)
-  POST /admin/api/tips             add a tip; DELETE /admin/api/tips/<id> deletes one
+  POST /admin/api/tips             add a tip; PUT /admin/api/tips/<id> edits one; DELETE /admin/api/tips/<id> deletes one
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
 For local development, pass --static to also serve the site from a folder.
@@ -247,6 +247,21 @@ class TipStore:
             self._write_json(self.path, tips)
             return tip
 
+    def update(self, tip_id: str, text: str, text_en: str = "") -> dict | None:
+        """Changes a tip's texts; its place in the order and the rotation stay. None if there is no such tip."""
+        with self.lock:
+            tips = self._read()
+            tip = next((tip for tip in tips if tip["id"] == tip_id), None)
+            if tip is None:
+                return None
+            tip["text"] = text
+            if text_en:
+                tip["textEn"] = text_en
+            else:
+                tip.pop("textEn", None)
+            self._write_json(self.path, tips)
+            return tip
+
     def delete(self, tip_id: str) -> bool:
         with self.lock:
             tips = self._read()
@@ -473,6 +488,9 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a karakter már nincs a listán."})
 
     def do_PUT(self):
+        if self.path.startswith("/admin/api/tips/"):
+            self.update_tip()
+            return
         character_id = self.character_id_from_path()
         if character_id is None:
             return
@@ -486,6 +504,24 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if updated is None:
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a karakter már nincs a listán."})
+        else:
+            self.send_json(HTTPStatus.OK, updated)
+
+    def update_tip(self):
+        tip_id = self.character_id_from_path("/admin/api/tips/")
+        if tip_id is None:
+            return
+        data = self.read_json_body()
+        if data is None:
+            return
+        try:
+            text, text_en = validate_tip(data)
+        except ValueError as error:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        updated = self.tips.update(tip_id, text, text_en)
+        if updated is None:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a tipp már nincs meg."})
         else:
             self.send_json(HTTPStatus.OK, updated)
 

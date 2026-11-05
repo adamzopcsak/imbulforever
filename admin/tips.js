@@ -6,9 +6,44 @@
   const form = document.getElementById("tip-form");
   const message = document.getElementById("tip-message");
   const countdown = document.getElementById("tip-countdown");
+  const submitButton = document.getElementById("tip-submit");
+  const cancelButton = document.getElementById("tip-cancel");
   if (!list || !form) return;
 
   let nextChangeAt = null;
+  // Id of the tip being edited, or null when the form adds a new one.
+  let editingId = null;
+
+  function highlightEditedTip() {
+    for (const item of list.children) {
+      item.classList.toggle("editing", editingId !== null && item.dataset.id === editingId);
+    }
+  }
+
+  function startEditing(tip) {
+    editingId = tip.id;
+    form.elements.text.value = tip.text;
+    form.elements.textEn.value = tip.textEn || "";
+    submitButton.textContent = "Mentés";
+    cancelButton.hidden = false;
+    say("");
+    highlightEditedTip();
+    form.scrollIntoView({ behavior: "smooth", block: "center" });
+    form.elements.text.focus({ preventScroll: true });
+  }
+
+  function stopEditing() {
+    editingId = null;
+    form.reset();
+    submitButton.textContent = "Tipp hozzáadása";
+    cancelButton.hidden = true;
+    highlightEditedTip();
+  }
+
+  cancelButton.addEventListener("click", () => {
+    stopEditing();
+    say("");
+  });
 
   function say(text, kind) {
     message.textContent = text;
@@ -62,6 +97,7 @@
     list.replaceChildren(...tips.map((tip, i) => {
       const li = document.createElement("li");
       li.className = "tip-admin-item";
+      li.dataset.id = tip.id;
       const number = document.createElement("span");
       number.className = "tip-number";
       number.textContent = `${i + 1}.`;
@@ -86,6 +122,12 @@
         soon.textContent = "következő";
         li.append(soon);
       }
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "edit-button";
+      edit.textContent = "Szerkesztés";
+      edit.addEventListener("click", () => startEditing(tip));
+      li.append(edit);
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "edit-button delete-button";
@@ -94,6 +136,7 @@
         if (!confirm(`Biztosan törlöd ezt a tippet?\n\n${tip.text}`)) return;
         try {
           await fetchJson(`/admin/api/tips/${encodeURIComponent(tip.id)}`, { method: "DELETE" });
+          if (editingId === tip.id) stopEditing();
           say("Tipp törölve.", "success");
         } catch (error) {
           say(error.message || "Nem sikerült a törlés.", "error");
@@ -103,6 +146,7 @@
       li.append(remove);
       return li;
     }));
+    highlightEditedTip();
     tick();
   }
 
@@ -114,21 +158,21 @@
       say("A tipp szövege nem lehet üres.", "error");
       return;
     }
-    const button = form.querySelector("button");
-    button.disabled = true;
+    const isEdit = editingId !== null;
+    submitButton.disabled = true;
     try {
-      await fetchJson("/admin/api/tips", {
-        method: "POST",
+      await fetchJson(isEdit ? `/admin/api/tips/${encodeURIComponent(editingId)}` : "/admin/api/tips", {
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, textEn }),
       });
-      form.reset();
-      say("Tipp hozzáadva a lista végére.", "success");
+      stopEditing();
+      say(isEdit ? "Tipp mentve." : "Tipp hozzáadva a lista végére.", "success");
       refresh();
     } catch (error) {
       say(error.message || "Nem sikerült a mentés.", "error");
     } finally {
-      button.disabled = false;
+      submitButton.disabled = false;
     }
   });
 
