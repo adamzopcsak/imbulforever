@@ -6,6 +6,8 @@ Endpoints:
   POST /admin/api/characters       add a character (protected by Caddy basic auth in production)
   PUT  /admin/api/characters/<id>  update a character (protected the same way)
   DELETE /admin/api/characters/<id>  delete a character (protected the same way)
+  GET  /api/tips                   the tips shown under the list (one per hour)
+  POST /admin/api/tips             add a tip; DELETE /admin/api/tips/<id> deletes one
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
 For local development, pass --static to also serve the site from a folder.
@@ -33,6 +35,8 @@ APP_DIR = Path(__file__).resolve().parent
 MAX_BODY_BYTES = 10_000
 MAX_NAME_LENGTH = 24
 MAX_OWNER_LENGTH = 40
+MAX_TIP_LENGTH = 300
+FIRST_TIP = "Tudtad? Ha rákattintasz egy karakter nevére, megnézheted a gearjét."
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
 SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment", "refreshedAt")
@@ -168,6 +172,59 @@ class CharacterStore:
             return True
 
 
+class TipStore:
+    """The tips shown under the character list, kept in one JSON file (in the order they were added)."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.lock = threading.Lock()
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self._write([{"id": uuid.uuid4().hex, "text": FIRST_TIP, "createdAt": utc_now()}])
+
+    def _read(self) -> list:
+        return json.loads(self.path.read_text(encoding="utf-8"))
+
+    def _write(self, tips: list) -> None:
+        fd, tmp = tempfile.mkstemp(dir=self.path.parent, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(tips, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        os.replace(tmp, self.path)
+
+    def list(self) -> list:
+        with self.lock:
+            return self._read()
+
+    def add(self, text: str) -> dict:
+        with self.lock:
+            tips = self._read()
+            tip = {"id": uuid.uuid4().hex, "text": text, "createdAt": utc_now()}
+            tips.append(tip)
+            self._write(tips)
+            return tip
+
+    def delete(self, tip_id: str) -> bool:
+        with self.lock:
+            tips = self._read()
+            remaining = [tip for tip in tips if tip.get("id") != tip_id]
+            if len(remaining) == len(tips):
+                return False
+            self._write(remaining)
+            return True
+
+
+def validate_tip(data: object) -> str:
+    """The tip text, trimmed; raises ValueError with a Hungarian message for the UI."""
+    text = data.get("text") if isinstance(data, dict) else None
+    if not isinstance(text, str) or not text.strip():
+        raise ValueError("A tipp szövege nem lehet üres.")
+    text = " ".join(text.split())
+    if len(text) > MAX_TIP_LENGTH:
+        raise ValueError(f"A tipp legfeljebb {MAX_TIP_LENGTH} karakter lehet.")
+    return text
+
+
 def validate_character(data: object) -> dict:
     """Return a clean character dict, or raise ValueError with a Hungarian message for the UI."""
     if not isinstance(data, dict):
@@ -230,8 +287,9 @@ def validate_character(data: object) -> dict:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, store: CharacterStore, sync, static_dir: str | None, **kwargs):
+    def __init__(self, *args, store: CharacterStore, tips: TipStore, sync, static_dir: str | None, **kwargs):
         self.store = store
+        self.tips = tips
         self.sync = sync
         self.static_dir = static_dir
         super().__init__(*args, directory=static_dir or str(APP_DIR), **kwargs)
@@ -256,6 +314,8 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path == "/api/characters":
             self.send_json(HTTPStatus.OK, self.store.list())
+        elif path == "/api/tips":
+            self.send_json(HTTPStatus.OK, self.tips.list())
         elif path == "/api/status":
             self.send_json(HTTPStatus.OK, {"lastSync": self.sync.last_sync if self.sync else None})
         elif self.static_dir and not path.startswith(("/api/", "/admin/api/")):
@@ -286,8 +346,35 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         return None
 
+    def read_json_body(self) -> object:
+        """The parsed JSON body; sends a 400 and returns None if it is missing or invalid."""
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = -1
+        if not 0 < length <= MAX_BODY_BYTES:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Hibás kérés."})
+            return None
+        try:
+            return json.loads(self.rfile.read(length))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Hibás kérés."})
+            return None
+
     def do_POST(self):
-        if self.path.split("?", 1)[0] != "/admin/api/characters":
+        path = self.path.split("?", 1)[0]
+        if path == "/admin/api/tips":
+            data = self.read_json_body()
+            if data is None:
+                return
+            try:
+                text = validate_tip(data)
+            except ValueError as error:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+                return
+            self.send_json(HTTPStatus.CREATED, self.tips.add(text))
+            return
+        if path != "/admin/api/characters":
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})
             return
         character = self.read_character()
@@ -300,9 +387,8 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             self.send_json(HTTPStatus.CREATED, created)
 
-    def character_id_from_path(self) -> str | None:
-        """The id in /admin/api/characters/<id>; sends a 404 and returns None if the path does not match."""
-        prefix = "/admin/api/characters/"
+    def character_id_from_path(self, prefix: str = "/admin/api/characters/") -> str | None:
+        """The id in <prefix><id>; sends a 404 and returns None if the path does not match."""
         path = self.path.split("?", 1)[0]
         character_id = path[len(prefix):] if path.startswith(prefix) else ""
         if not character_id or "/" in character_id:
@@ -311,6 +397,15 @@ class Handler(SimpleHTTPRequestHandler):
         return character_id
 
     def do_DELETE(self):
+        if self.path.startswith("/admin/api/tips/"):
+            tip_id = self.character_id_from_path("/admin/api/tips/")
+            if tip_id is None:
+                return
+            if self.tips.delete(tip_id):
+                self.send_json(HTTPStatus.OK, {"deleted": tip_id})
+            else:
+                self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a tipp már nincs meg."})
+            return
         character_id = self.character_id_from_path()
         if character_id is None:
             return
@@ -349,6 +444,7 @@ def main() -> None:
     args = parser.parse_args()
 
     store = CharacterStore(args.data, args.seed)
+    tips = TipStore(args.data.parent / "tips.json")
 
     sync = None
     client_id, client_secret = os.environ.get("BNET_CLIENT_ID"), os.environ.get("BNET_CLIENT_SECRET")
@@ -361,7 +457,7 @@ def main() -> None:
         print("BNET_CLIENT_ID / BNET_CLIENT_SECRET not set: Blizzard sync is off", flush=True)
 
     static_dir = str(Path(args.static).resolve()) if args.static else None
-    server = ThreadingHTTPServer((args.host, args.port), partial(Handler, store=store, sync=sync, static_dir=static_dir))
+    server = ThreadingHTTPServer((args.host, args.port), partial(Handler, store=store, tips=tips, sync=sync, static_dir=static_dir))
     print(f"Listening on http://{args.host}:{args.port}", flush=True)
     server.serve_forever()
 

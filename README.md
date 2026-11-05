@@ -16,6 +16,7 @@ A page listing World of Warcraft: Forever characters, served at https://imbulfor
 - **`server.py`:** a small API (Python standard library only):
   - `GET /api/characters`: the public list
   - `GET /api/status`: time of the last Blizzard sync (`lastSync`)
+  - `GET /api/tips`, `POST /admin/api/tips`, `DELETE /admin/api/tips/{id}`: the tips pool. The homepage shows one tip under the list, the next one every hour (the same for everyone); the admin page adds and deletes tips. Stored in `tips.json` next to the data file, seeded with the first tip.
   - `POST /admin/api/characters`: adds a character (validated; duplicate full names are rejected)
   - `PUT /admin/api/characters/{id}`: updates a character (same validation)
   - `DELETE /admin/api/characters/{id}`: deletes a character

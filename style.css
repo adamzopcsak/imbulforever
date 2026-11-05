@@ -832,3 +832,55 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* The last header ("Utoljára frissült") may wrap on narrow screens so the table still fits */
 .characters th:last-child { white-space: normal; }
+
+/* Tip of the hour under the list */
+.tip-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+}
+.tip-card[hidden] { display: none; }
+.tip-icon { font-size: 1.2rem; line-height: 1.4; }
+.tip-card p { color: var(--fg); }
+
+/* Admin: tips pool */
+.tips-panel { margin-top: 32px; }
+.tip-admin-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
+.tip-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.tip-admin-text { flex: 1; min-width: 0; }
+.tip-now {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  color: var(--accent);
+  font-size: .75rem;
+  font-weight: 700;
+}
+.tip-admin-empty { color: var(--muted); }
+.form.tip-form { grid-template-columns: 1fr; }
+.form textarea {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+.form textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
