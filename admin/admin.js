@@ -31,8 +31,9 @@ async function main() {
     return;
   }
 
-  fillSelect(form.elements.class, Object.entries(gameData.classes).map(([key, c]) => [key, c.label]));
+  fillSelect(form.elements.class, Object.entries(gameData.classes).map(([key, c]) => [key, c.name]));
   fillSelect(form.elements.race, Object.entries(gameData.races));
+  fillSelect(form.elements.gender, Object.entries(gameData.genders));
   fillSelect(form.elements.role, Object.entries(gameData.roles));
   form.elements.level.max = gameData.maxLevel;
 
@@ -47,6 +48,7 @@ async function main() {
       class: fields.class.value,
       level: Number(fields.level.value),
       race: fields.race.value,
+      gender: fields.gender.value,
       role: fields.role.value,
     };
 

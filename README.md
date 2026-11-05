@@ -5,7 +5,8 @@ A page listing World of Warcraft: Forever characters, served at https://imbulfor
 ## How it works
 
 - **Static pages:** `index.html` (public list) and `admin/index.html` (add form), with `shared.js`, `app.js`, `admin/admin.js` and `style.css`.
-- **`game-data.json`:** classes (Hungarian label and class color), races, roles and the max level. Both the pages and the API use it, so new races or classes only need to be added here.
+- **`icons/`:** class and race icons (from the Wowhead image CDN, `wow.zamimg.com`). Race icons exist per gender: `icons/race/{race}_{male|female}.jpg`.
+- **`game-data.json`:** classes (English name and class color), races, genders, roles and the max level. Both the pages and the API use it, so a new race or class is added here plus its icon(s) in `icons/`.
 - **`server.py`:** a small API (Python standard library only):
   - `GET /api/characters`: the public list
   - `POST /admin/api/characters`: adds a character (validated; duplicate full names are rejected)

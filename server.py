@@ -105,6 +105,7 @@ def validate_character(data: object) -> dict:
         "level": level,
         "role": choice("role", "szerep", GAME_DATA["roles"]),
         "race": choice("race", "faj", GAME_DATA["races"]),
+        "gender": choice("gender", "nem", GAME_DATA["genders"]),
     }
 
 

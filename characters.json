@@ -5,6 +5,7 @@
     "class": "mage",
     "level": 6,
     "role": "pvp",
-    "race": "skyborne"
+    "race": "skyborne",
+    "gender": "female"
   }
 ]
