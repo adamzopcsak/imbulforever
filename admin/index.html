@@ -103,7 +103,8 @@
 
   <section class="panel tips-panel">
     <h2>Tippek</h2>
-    <p class="panel-note">A főoldalon a táblázat alatt óránként más tipp jelenik meg, sorban ebből a listából, mindenkinek ugyanaz.</p>
+    <p class="panel-note">A főoldalon a táblázat alatt óránként más tipp jelenik meg: minden egész órakor a lista következő tippje, a végén újra az első. Mindenkinek ugyanaz látszik.</p>
+    <p id="tip-countdown" class="tip-countdown" hidden></p>
     <ul id="tip-list" class="tip-admin-list"></ul>
     <form id="tip-form" class="form tip-form">
       <textarea name="text" rows="2" maxlength="300" placeholder="Új tipp, például: Tudtad? …" required></textarea>

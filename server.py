@@ -6,7 +6,7 @@ Endpoints:
   POST /admin/api/characters       add a character (protected by Caddy basic auth in production)
   PUT  /admin/api/characters/<id>  update a character (protected the same way)
   DELETE /admin/api/characters/<id>  delete a character (protected the same way)
-  GET  /api/tips                   the tips shown under the list (one per hour)
+  GET  /api/tips                   the tips, the one shown now and when the next one comes (every hour)
   POST /admin/api/tips             add a tip; DELETE /admin/api/tips/<id> deletes one
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
@@ -173,44 +173,93 @@ class CharacterStore:
 
 
 class TipStore:
-    """The tips shown under the character list, kept in one JSON file (in the order they were added)."""
+    """The tips shown under the character list, in the order they were added, and which one is shown now.
+
+    The shown tip moves on to the next one in the list at every full hour (the same for every visitor),
+    and wraps around at the end. Deleting the shown tip moves on to the one after it; adding a tip puts it
+    at the end of the list without changing the shown one. The rotation is kept in a second file.
+    """
 
     def __init__(self, path: Path):
         self.path = path
+        self.state_path = path.with_name(path.stem + "-rotation.json")
         self.lock = threading.Lock()
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
-            self._write([{"id": uuid.uuid4().hex, "text": FIRST_TIP, "createdAt": utc_now()}])
+            self._write_json(path, [{"id": uuid.uuid4().hex, "text": FIRST_TIP, "createdAt": utc_now()}])
 
     def _read(self) -> list:
         return json.loads(self.path.read_text(encoding="utf-8"))
 
-    def _write(self, tips: list) -> None:
-        fd, tmp = tempfile.mkstemp(dir=self.path.parent, suffix=".tmp")
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(tips, f, ensure_ascii=False, indent=2)
-            f.write("\n")
-        os.replace(tmp, self.path)
+    def _read_state(self) -> dict:
+        try:
+            return json.loads(self.state_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
 
-    def list(self) -> list:
+    def _write_json(self, path: Path, value) -> None:
+        fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(value, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        os.replace(tmp, path)
+
+    @staticmethod
+    def _hour_start(now: datetime) -> datetime:
+        return now.replace(minute=0, second=0, microsecond=0)
+
+    def _current(self, tips: list) -> dict:
+        """Advance the rotation to now and return {currentId, nextChangeAt}; writes the state if it moved."""
+        hour = self._hour_start(datetime.now(timezone.utc))
+        state = self._read_state()
+        ids = [tip["id"] for tip in tips]
+        changed = False
+        if not ids:
+            current = None
+        elif state.get("currentId") in ids and state.get("since"):
+            since = datetime.fromisoformat(state["since"].replace("Z", "+00:00"))
+            steps = max(0, int((hour - since).total_seconds() // 3600))
+            current = ids[(ids.index(state["currentId"]) + steps) % len(ids)]
+            changed = steps > 0
+        else:
+            current = ids[0]
+            changed = True
+        if changed:
+            self._write_json(self.state_path, {"currentId": current, "since": hour.strftime("%Y-%m-%dT%H:%M:%SZ")})
+        next_change = hour.replace(tzinfo=timezone.utc).timestamp() + 3600
+        return {"currentId": current,
+                "nextChangeAt": datetime.fromtimestamp(next_change, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+
+    def snapshot(self) -> dict:
+        """{tips, currentId, nextChangeAt} for the API."""
         with self.lock:
-            return self._read()
+            tips = self._read()
+            return {"tips": tips, **self._current(tips)}
 
     def add(self, text: str) -> dict:
         with self.lock:
             tips = self._read()
+            self._current(tips)  # settle the rotation before the list changes
             tip = {"id": uuid.uuid4().hex, "text": text, "createdAt": utc_now()}
             tips.append(tip)
-            self._write(tips)
+            self._write_json(self.path, tips)
             return tip
 
     def delete(self, tip_id: str) -> bool:
         with self.lock:
             tips = self._read()
-            remaining = [tip for tip in tips if tip.get("id") != tip_id]
-            if len(remaining) == len(tips):
+            ids = [tip["id"] for tip in tips]
+            if tip_id not in ids:
                 return False
-            self._write(remaining)
+            current = self._current(tips)["currentId"]
+            index = ids.index(tip_id)
+            remaining = tips[:index] + tips[index + 1:]
+            self._write_json(self.path, remaining)
+            if current == tip_id and remaining:
+                # The shown tip was deleted: show the one that came after it, for the rest of this hour.
+                successor = remaining[index % len(remaining)]["id"]
+                since = self._hour_start(datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                self._write_json(self.state_path, {"currentId": successor, "since": since})
             return True
 
 
@@ -315,7 +364,7 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/characters":
             self.send_json(HTTPStatus.OK, self.store.list())
         elif path == "/api/tips":
-            self.send_json(HTTPStatus.OK, self.tips.list())
+            self.send_json(HTTPStatus.OK, self.tips.snapshot())
         elif path == "/api/status":
             self.send_json(HTTPStatus.OK, {"lastSync": self.sync.last_sync if self.sync else None})
         elif self.static_dir and not path.startswith(("/api/", "/admin/api/")):

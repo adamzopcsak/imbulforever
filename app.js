@@ -1,18 +1,12 @@
 // Public homepage: renders the character list and the tip of the hour.
 
-// The tip shown this hour: every visitor sees the same one, and it moves on to the next tip each hour.
-// (Budapest is a whole number of hours off UTC, so UTC hours change together with local ones.)
-function tipOfTheHour(tips) {
-  if (!tips.length) return null;
-  const hour = Math.floor(Date.now() / 3_600_000);
-  return tips[hour % tips.length];
-}
-
+// The tip of the hour: the server says which one (it moves on to the next tip in the list every full hour).
 async function renderTip() {
   const card = document.getElementById("tip-card");
   const text = document.getElementById("tip-text");
   try {
-    const tip = tipOfTheHour(await fetchJson("/api/tips"));
+    const { tips, currentId } = await fetchJson("/api/tips");
+    const tip = tips.find((t) => t.id === currentId);
     card.hidden = !tip;
     if (tip) text.textContent = tip.text;
   } catch (error) {

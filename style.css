@@ -884,3 +884,14 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   resize: vertical;
 }
 .form textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.tip-countdown { margin: -4px 0 12px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tip-number { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.6em; }
+.tip-next {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 600;
+}
