@@ -81,7 +81,7 @@ function showNewVersionDialog(version) {
   title.id = "new-version-title";
   title.textContent = "✨ Frissült az oldal";
   const text = document.createElement("p");
-  text.textContent = `Közben megjelent az Imbul Forever új verziója (v${version}). `
+  text.textContent = `Megjelent az Imbul Forever új verziója (v${version}). `
     + "Töltsd újra az oldalt, hogy a legfrissebb változatot lásd, és minden rendben működjön.";
 
   const actions = document.createElement("div");
