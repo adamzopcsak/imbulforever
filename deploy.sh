@@ -12,11 +12,16 @@ WEB=/var/www/imbulforever.yagi.hu
 APP=/opt/imbulforever
 
 cd "$(dirname "$0")"
+
+# version.json is shown in the page footer: the version from VERSION and the release (deploy) time in UTC.
+VERSION=$(tr -d '[:space:]' < VERSION)
+printf '{"version": "%s", "released": "%s"}\n' "$VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
+
 ssh -i "$KEY" "$HOST" "mkdir -p $WEB/admin $APP"
-scp -i "$KEY" index.html style.css shared.js app.js game-data.json favicon.svg "$HOST:$WEB/"
+scp -i "$KEY" index.html style.css shared.js app.js game-data.json favicon.svg version.json "$HOST:$WEB/"
 scp -i "$KEY" admin/index.html admin/admin.js "$HOST:$WEB/admin/"
 scp -i "$KEY" -r icons "$HOST:$WEB/"
 scp -i "$KEY" server.py game-data.json characters.json deploy/set-admin-password.sh "$HOST:$APP/"
 scp -i "$KEY" deploy/imbulforever.service "$HOST:/etc/systemd/system/imbulforever.service"
 ssh -i "$KEY" "$HOST" "chmod -R a+rX $WEB $APP && chmod 700 $APP/set-admin-password.sh && systemctl daemon-reload && systemctl enable --quiet imbulforever && systemctl restart imbulforever && systemctl is-active imbulforever"
-echo "Deployed to https://imbulforever.yagi.hu"
+echo "Deployed version $VERSION to https://imbulforever.yagi.hu"

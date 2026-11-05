@@ -362,3 +362,13 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 /* Admin: delete button next to the edit button */
 .actions .edit-button + .edit-button { margin-left: 6px; }
 .delete-button:hover { color: #f07167; border-color: #f07167; }
+
+/* Footer with version and release time */
+.site-footer {
+  max-width: 860px;
+  margin: 40px auto 0;
+  color: var(--muted);
+  font-size: .8rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
