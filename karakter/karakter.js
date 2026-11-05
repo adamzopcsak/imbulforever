@@ -180,6 +180,8 @@ function renderCharacter(container, character, gameData) {
   details.append(detail("Professions", professions.length ? professionList : "—"));
 
   details.append(detail("Roleset", character.role ? (gameData.roles[character.role] || character.role) : "—"));
+  const refreshed = lastRefresh(character);
+  details.append(detail("Utoljára frissült", refreshed ? relativeTime(refreshed) : "—"));
   details.append(detail("Utolsó belépés", character.lastLogin ? relativeTime(character.lastLogin) : "—"));
   card.append(details);
 
