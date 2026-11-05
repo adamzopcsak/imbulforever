@@ -84,10 +84,12 @@ function renderCharacterRow(character, gameData, renderActions) {
   );
 
   const roleTd = document.createElement("td");
-  const role = document.createElement("span");
-  role.className = `role role-${character.role}`;
-  role.textContent = gameData.roles[character.role] || character.role;
-  roleTd.append(role);
+  if (character.role) {
+    const role = document.createElement("span");
+    role.className = `role role-${character.role}`;
+    role.textContent = gameData.roles[character.role] || character.role;
+    roleTd.append(role);
+  }
   tr.append(roleTd);
 
   if (renderActions) tr.append(renderActions(character));

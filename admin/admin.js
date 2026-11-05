@@ -42,7 +42,8 @@ async function main() {
   fillSelect(fields.race, Object.entries(gameData.races));
   fillSelect(fields.gender, Object.entries(gameData.genders));
   fillSelect(fields.faction, Object.entries(gameData.factions));
-  fillSelect(fields.role, Object.entries(gameData.roles));
+  // The roleset is optional, so the first option is empty.
+  fillSelect(fields.role, [["", "—"], ...Object.entries(gameData.roles)]);
   fields.level.max = gameData.maxLevel;
 
   // Profession checkboxes, shown as icons with the English name on hover.
@@ -86,7 +87,7 @@ async function main() {
     fields.race.value = character.race;
     fields.gender.value = character.gender || "male";
     fields.faction.value = character.faction || "alliance";
-    fields.role.value = character.role;
+    fields.role.value = character.role || "";
     const professions = character.professions || [];
     for (const box of professionBoxes) box.checked = professions.includes(box.value);
     formTitle.textContent = `${character.name} ${character.surname} szerkesztése`;
@@ -107,15 +108,35 @@ async function main() {
     highlightEditedRow();
   }
 
+  async function deleteCharacter(character) {
+    const fullName = `${character.name} ${character.surname}`;
+    if (!confirm(`Biztosan törlöd: ${fullName}?`)) return;
+    try {
+      await fetchJson(`/admin/api/characters/${encodeURIComponent(character.id)}`, { method: "DELETE" });
+      if (editingId === character.id) stopEditing();
+      setMessage(message, `${fullName} törölve.`, "success");
+    } catch (error) {
+      setMessage(message, error.message || "Nem sikerült a törlés.", "error");
+    }
+    await refreshTable();
+  }
+
+  function actionButton(text, className, onClick) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = text;
+    button.addEventListener("click", onClick);
+    return button;
+  }
+
   function renderActions(character) {
     const td = document.createElement("td");
     td.className = "actions";
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "edit-button";
-    button.textContent = "Szerkesztés";
-    button.addEventListener("click", () => startEditing(character));
-    td.append(button);
+    td.append(
+      actionButton("Szerkesztés", "edit-button", () => startEditing(character)),
+      actionButton("Törlés", "edit-button delete-button", () => deleteCharacter(character)),
+    );
     return td;
   }
 
