@@ -7,8 +7,15 @@ A page listing World of Warcraft: Forever characters, served at https://imbulfor
 - **Static pages:** `index.html` (public list) and `admin/index.html` (add form), with `shared.js`, `app.js`, `admin/admin.js` and `style.css`.
 - **`icons/`:** class and race icons (from the Wowhead image CDN, `wow.zamimg.com`). Race icons exist per gender: `icons/race/{race}_{male|female}.jpg`; profession icons are `icons/profession/{profession}.jpg` and faction icons `icons/faction/{alliance|horde}.jpg`.
 - **`game-data.json`:** classes (English name and class color), races, genders, factions, roles, primary professions (at most `maxPrimaryProfessions` per character) and the max level. Both the pages and the API use it, so a new race or class is added here plus its icon(s) in `icons/`.
+- **`blizzard.py`:** background sync from the Blizzard Battle.net API. Every minute it fetches each character as `/profile/wow/character/{name}-{surname}` in the `profile-forever-eu` namespace (WoW: Forever has no realms) and, if found, overwrites level, class, race, gender, faction, ruleset and (every 15 minutes) primary professions, and stores `lastLogin`. The owner ("Kié") stays manual. A 404 changes nothing. Runs only if `BNET_CLIENT_ID` and `BNET_CLIENT_SECRET` are set; on the server they live in `/etc/imbulforever/bnet.env`, written by `deploy/set-bnet-credentials.sh`:
+
+  ```sh
+  ssh -t -i ~/.ssh/yagismot_deploy root@138.199.196.51 /opt/imbulforever/set-bnet-credentials.sh
+  ```
+
 - **`server.py`:** a small API (Python standard library only):
   - `GET /api/characters`: the public list
+  - `GET /api/status`: time of the last Blizzard sync (`lastSync`)
   - `POST /admin/api/characters`: adds a character (validated; duplicate full names are rejected)
   - `PUT /admin/api/characters/{id}`: updates a character (same validation)
   - `DELETE /admin/api/characters/{id}`: deletes a character

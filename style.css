@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark; /* dark scrollbars and form controls */
   --bg: #0f1114;
   --panel: #171a1f;
   --line: #262b33;
@@ -92,7 +93,6 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 }
 
 .role-pvp { color: #f07167; border-color: #5a2e2b; }
-.role-pve { color: #7cc6fe; border-color: #24435a; }
 
 .empty { color: var(--muted); text-align: center; }
 
@@ -376,9 +376,34 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   font-variant-numeric: tabular-nums;
 }
 
-/* "Frissítve" column: relative time, exact time on hover */
-.updated { color: var(--muted); font-size: .9rem; white-space: nowrap; }
-.updated .tooltip { cursor: default; }
 
 /* On narrow screens the table scrolls sideways instead of the whole page. */
 .table-wrap { position: relative; overflow-x: auto; }
+
+/* Rulesets (Blizzard names) */
+.role-normal { color: #7cc6fe; border-color: #24435a; }
+.role-roleplay { color: #c9a0ff; border-color: #3d2f57; }
+.role-roleplay-pvp { color: #f5a65b; border-color: #5a3b1f; }
+
+/* Last login column */
+.last-login { color: var(--muted); font-size: .9rem; white-space: nowrap; }
+.last-login .tooltip, .count .tooltip { cursor: default; }
+
+/* Admin: Blizzard source badge and note */
+.source-badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #13263a;
+  color: #7cc6fe;
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  vertical-align: middle;
+}
+
+.sync-note {
+  margin: -8px 0 16px;
+  color: var(--muted);
+  font-size: .85rem;
+}

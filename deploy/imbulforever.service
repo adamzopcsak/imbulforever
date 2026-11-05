@@ -4,6 +4,8 @@ Description=Imbul Forever character API (imbulforever.yagi.hu)
 After=network.target
 
 [Service]
+# Battle.net API client for the Blizzard sync (optional; written by set-bnet-credentials.sh).
+EnvironmentFile=-/etc/imbulforever/bnet.env
 ExecStart=/usr/bin/python3 /opt/imbulforever/server.py --host 127.0.0.1 --port 8001 --data /var/lib/imbulforever/characters.json --seed /opt/imbulforever/characters.json
 # Runs as a throwaway user; only /var/lib/imbulforever is writable.
 DynamicUser=yes
