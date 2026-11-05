@@ -30,8 +30,10 @@
     "female": "Nő"
   },
   "roles": {
+    "normal": "Normal",
     "pvp": "PvP",
-    "pve": "PvE"
+    "roleplay": "Roleplay",
+    "roleplay-pvp": "Roleplay PvP"
   },
   "professions": {
     "alchemy": { "name": "Alchemy", "type": "primary" },

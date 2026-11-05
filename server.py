@@ -2,12 +2,16 @@
 
 Endpoints:
   GET  /api/characters        public list of characters
+  GET  /api/status            time of the last Blizzard sync
   POST /admin/api/characters       add a character (protected by Caddy basic auth in production)
   PUT  /admin/api/characters/<id>  update a character (protected the same way)
   DELETE /admin/api/characters/<id>  delete a character (protected the same way)
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
 For local development, pass --static to also serve the site from a folder.
+
+If BNET_CLIENT_ID and BNET_CLIENT_SECRET are set, a background thread syncs the characters
+from the Blizzard Battle.net API every minute (see blizzard.py).
 """
 
 import argparse
@@ -23,11 +27,17 @@ from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import blizzard
+
 APP_DIR = Path(__file__).resolve().parent
 MAX_BODY_BYTES = 10_000
 MAX_NAME_LENGTH = 24
 MAX_OWNER_LENGTH = 40
 
+# Fields written by the Blizzard sync, kept when the admin saves a character.
+SYNC_ONLY_FIELDS = ("lastLogin", "blizzard")
+# Old roleset values -> current ones.
+ROLE_MIGRATIONS = {"pve": "normal"}
 
 
 def utc_now() -> str:
@@ -52,9 +62,15 @@ class CharacterStore:
                 path.write_text("[]\n", encoding="utf-8")
         with self.lock:
             characters = self._read()
-            if any("id" not in c for c in characters):
-                for c in characters:
-                    c.setdefault("id", uuid.uuid4().hex)
+            changed = False
+            for c in characters:
+                if "id" not in c:
+                    c["id"] = uuid.uuid4().hex
+                    changed = True
+                if c.get("role") in ROLE_MIGRATIONS:
+                    c["role"] = ROLE_MIGRATIONS[c["role"]]
+                    changed = True
+            if changed:
                 self._write(characters)
 
     def _read(self) -> list:
@@ -99,11 +115,30 @@ class CharacterStore:
             # Only a real change counts as an update; saving the same data keeps the old time.
             changed = any(old.get(key) != value for key, value in character.items())
             updated_at = utc_now() if changed else old.get("updatedAt")
-            characters[index] = {"id": character_id, **character}
+            sync_fields = {key: old[key] for key in SYNC_ONLY_FIELDS if key in old}
+            characters[index] = {"id": character_id, **character, **sync_fields}
             if updated_at:
                 characters[index]["updatedAt"] = updated_at
             self._write(characters)
             return characters[index]
+
+    def apply_sync(self, updates: dict) -> None:
+        """Merge Blizzard data ({character id: fields}) into the stored characters; writes only on a change."""
+        with self.lock:
+            characters = self._read()
+            changed = False
+            for c in characters:
+                fields = updates.get(c.get("id"))
+                if not fields:
+                    continue  # deleted meanwhile, or nothing from Blizzard
+                game_changed = any(c.get(k) != v for k, v in fields.items() if k not in SYNC_ONLY_FIELDS)
+                if any(c.get(k) != v for k, v in fields.items()):
+                    c.update(fields)
+                    changed = True
+                if game_changed:
+                    c["updatedAt"] = utc_now()
+            if changed:
+                self._write(characters)
 
     def delete(self, character_id: str) -> bool:
         """Remove the character; returns False if there is no character with this id."""
@@ -178,8 +213,9 @@ def validate_character(data: object) -> dict:
 
 
 class Handler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, store: CharacterStore, static_dir: str | None, **kwargs):
+    def __init__(self, *args, store: CharacterStore, sync, static_dir: str | None, **kwargs):
         self.store = store
+        self.sync = sync
         self.static_dir = static_dir
         super().__init__(*args, directory=static_dir or str(APP_DIR), **kwargs)
 
@@ -196,6 +232,8 @@ class Handler(SimpleHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path == "/api/characters":
             self.send_json(HTTPStatus.OK, self.store.list())
+        elif path == "/api/status":
+            self.send_json(HTTPStatus.OK, {"lastSync": self.sync.last_sync if self.sync else None})
         elif self.static_dir and not path.startswith(("/api/", "/admin/api/")):
             super().do_GET()
         else:
@@ -287,8 +325,19 @@ def main() -> None:
     args = parser.parse_args()
 
     store = CharacterStore(args.data, args.seed)
+
+    sync = None
+    client_id, client_secret = os.environ.get("BNET_CLIENT_ID"), os.environ.get("BNET_CLIENT_SECRET")
+    if client_id and client_secret:
+        client = blizzard.BlizzardClient(client_id, client_secret, os.environ.get("BNET_REGION", "eu"))
+        sync = blizzard.BlizzardSync(store, client, GAME_DATA)
+        sync.start()
+        print("Blizzard sync started", flush=True)
+    else:
+        print("BNET_CLIENT_ID / BNET_CLIENT_SECRET not set: Blizzard sync is off", flush=True)
+
     static_dir = str(Path(args.static).resolve()) if args.static else None
-    server = ThreadingHTTPServer((args.host, args.port), partial(Handler, store=store, static_dir=static_dir))
+    server = ThreadingHTTPServer((args.host, args.port), partial(Handler, store=store, sync=sync, static_dir=static_dir))
     print(f"Listening on http://{args.host}:{args.port}", flush=True)
     server.serve_forever()
 

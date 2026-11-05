@@ -93,18 +93,22 @@ function iconCell(src, name) {
   return td;
 }
 
-// Relative time of the last admin change, with the exact time as a tooltip.
-function updatedCell(updatedAt) {
+// Relative time with the exact time as a tooltip, e.g. "3 órája" (hover: "2026.11.05. 13:40").
+function relativeTime(iso) {
+  const date = new Date(iso);
+  const span = document.createElement("span");
+  span.className = "tooltip";
+  span.dataset.tooltip = formatDateTime(date);
+  span.textContent = formatRelative(date);
+  return span;
+}
+
+// Last login from the Blizzard API; "—" while the API does not know the character.
+function lastLoginCell(lastLogin) {
   const td = document.createElement("td");
-  td.className = "updated";
-  if (updatedAt) {
-    const date = new Date(updatedAt);
-    const span = document.createElement("span");
-    span.className = "tooltip";
-    span.dataset.tooltip = formatDateTime(date);
-    span.textContent = formatRelative(date);
-    td.append(span);
-  }
+  td.className = "last-login";
+  if (lastLogin) td.append(relativeTime(lastLogin));
+  else td.textContent = "—";
   return td;
 }
 
@@ -148,7 +152,7 @@ function renderCharacterRow(character, gameData, renderActions) {
     role.textContent = gameData.roles[character.role] || character.role;
     roleTd.append(role);
   }
-  tr.append(roleTd, updatedCell(character.updatedAt));
+  tr.append(roleTd, lastLoginCell(character.lastLogin));
 
   if (renderActions) tr.append(renderActions(character));
   return tr;
@@ -172,7 +176,10 @@ async function renderCharacterTable(tbody, countEl, gameData, renderActions, { k
     } else {
       tbody.replaceChildren(...characters.map((c) => renderCharacterRow(c, gameData, renderActions)));
     }
-    countEl.textContent = `${characters.length} karakter`;
+    countEl.replaceChildren(`${characters.length} karakter`);
+    // Time of the last Blizzard sync, if the sync is running.
+    const status = await fetchJson("/api/status").catch(() => null);
+    if (status && status.lastSync) countEl.append(" · frissítve: ", relativeTime(status.lastSync));
     return characters;
   } catch (error) {
     console.error("Failed to load characters", error);

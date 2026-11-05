@@ -25,6 +25,7 @@ async function main() {
   const tbody = document.getElementById("character-rows");
   const count = document.getElementById("count");
   const fields = form.elements;
+  const syncNote = document.getElementById("sync-note");
 
   // Id of the character being edited, or null when the form adds a new one.
   let editingId = null;
@@ -91,6 +92,7 @@ async function main() {
     const professions = character.professions || [];
     for (const box of professionBoxes) box.checked = professions.includes(box.value);
     formTitle.textContent = `${character.name} ${character.surname} szerkesztése`;
+    syncNote.hidden = !character.blizzard;
     submitButton.textContent = "Mentés";
     cancelButton.hidden = false;
     setMessage(message, "");
@@ -103,6 +105,7 @@ async function main() {
     editingId = null;
     form.reset();
     formTitle.textContent = "Új karakter";
+    syncNote.hidden = true;
     submitButton.textContent = "Hozzáadás";
     cancelButton.hidden = true;
     highlightEditedRow();
@@ -130,6 +133,19 @@ async function main() {
     return button;
   }
 
+  // Characters found in the Blizzard API get a badge; their game data is overwritten by the sync.
+  function markBlizzardRows() {
+    for (const row of tbody.rows) {
+      const character = charactersById.get(row.dataset.id);
+      if (!character || !character.blizzard || row.querySelector(".source-badge")) continue;
+      const badge = document.createElement("span");
+      badge.className = "source-badge tooltip";
+      badge.dataset.tooltip = "Az adatok a Blizzard API-ból frissülnek";
+      badge.textContent = "Blizzard";
+      row.cells[0].append(" ", badge);
+    }
+  }
+
   function renderActions(character) {
     const td = document.createElement("td");
     td.className = "actions";
@@ -140,8 +156,12 @@ async function main() {
     return td;
   }
 
+  let charactersById = new Map();
+
   async function refreshTable(options) {
-    await renderCharacterTable(tbody, count, gameData, renderActions, options);
+    const characters = await renderCharacterTable(tbody, count, gameData, renderActions, options);
+    if (characters.length) charactersById = new Map(characters.map((c) => [c.id, c]));
+    markBlizzardRows();
     highlightEditedRow();
   }
 
