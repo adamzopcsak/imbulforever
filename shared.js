@@ -72,8 +72,10 @@ function renderCharacterRow(character, gameData, renderActions) {
   tr.dataset.id = character.id;
   if (cls.color) tr.style.setProperty("--class-color", cls.color);
 
+  const factionName = gameData.factions[character.faction];
   tr.append(
     cell(`${character.name} ${character.surname}`, "name"),
+    factionName ? iconCell(`/icons/faction/${character.faction}.jpg`, factionName) : cell(""),
     iconCell(`/icons/class/${character.class}.jpg`, cls.name),
     cell(String(character.level), "num"),
     iconCell(`/icons/race/${character.race}_${gender}.jpg`, raceName),
