@@ -2,7 +2,8 @@
 
 Endpoints:
   GET  /api/characters        public list of characters
-  POST /admin/api/characters  add a character (protected by Caddy basic auth in production)
+  POST /admin/api/characters       add a character (protected by Caddy basic auth in production)
+  PUT  /admin/api/characters/<id>  update a character (protected the same way)
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
 For local development, pass --static to also serve the site from a folder.
@@ -60,16 +61,33 @@ class CharacterStore:
         with self.lock:
             return self._read()
 
+    @staticmethod
+    def _check_unique_name(characters: list, character: dict, ignore_id: str | None = None) -> None:
+        full_name = f"{character['name']} {character['surname']}".casefold()
+        for c in characters:
+            if c.get("id") != ignore_id and f"{c['name']} {c['surname']}".casefold() == full_name:
+                raise ValueError("Ilyen nevű karakter már van a listán.")
+
     def add(self, character: dict) -> dict:
         with self.lock:
             characters = self._read()
-            full_name = f"{character['name']} {character['surname']}".casefold()
-            if any(f"{c['name']} {c['surname']}".casefold() == full_name for c in characters):
-                raise ValueError("Ilyen nevű karakter már van a listán.")
+            self._check_unique_name(characters, character)
             character = {"id": uuid.uuid4().hex, **character}
             characters.append(character)
             self._write(characters)
             return character
+
+    def update(self, character_id: str, character: dict) -> dict | None:
+        """Replace the character's fields; returns None if there is no character with this id."""
+        with self.lock:
+            characters = self._read()
+            index = next((i for i, c in enumerate(characters) if c.get("id") == character_id), None)
+            if index is None:
+                return None
+            self._check_unique_name(characters, character, ignore_id=character_id)
+            characters[index] = {"id": character_id, **character}
+            self._write(characters)
+            return characters[index]
 
 
 def validate_character(data: object) -> dict:
@@ -139,26 +157,56 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             self.send_error(HTTPStatus.NOT_FOUND)
 
-    def do_POST(self):
-        if self.path.split("?", 1)[0] != "/admin/api/characters":
-            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})
-            return
+    def read_character(self) -> dict | None:
+        """Read and validate the JSON body; sends a 400 and returns None if it is invalid."""
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             length = -1
         if not 0 < length <= MAX_BODY_BYTES:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Hibás kérés."})
-            return
+            return None
         try:
-            data = json.loads(self.rfile.read(length))
-            character = self.store.add(validate_character(data))
+            return validate_character(json.loads(self.rfile.read(length)))
         except json.JSONDecodeError:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Hibás kérés."})
         except ValueError as error:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+        return None
+
+    def do_POST(self):
+        if self.path.split("?", 1)[0] != "/admin/api/characters":
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})
+            return
+        character = self.read_character()
+        if character is None:
+            return
+        try:
+            created = self.store.add(character)
+        except ValueError as error:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         else:
-            self.send_json(HTTPStatus.CREATED, character)
+            self.send_json(HTTPStatus.CREATED, created)
+
+    def do_PUT(self):
+        prefix = "/admin/api/characters/"
+        path = self.path.split("?", 1)[0]
+        character_id = path[len(prefix):] if path.startswith(prefix) else ""
+        if not character_id or "/" in character_id:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})
+            return
+        character = self.read_character()
+        if character is None:
+            return
+        try:
+            updated = self.store.update(character_id, character)
+        except ValueError as error:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        if updated is None:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a karakter már nincs a listán."})
+        else:
+            self.send_json(HTTPStatus.OK, updated)
 
 
 def main() -> None:
