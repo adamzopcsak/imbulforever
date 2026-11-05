@@ -23,7 +23,15 @@ Then open http://localhost:5517 and http://localhost:5517/admin/. Locally there 
 
 ## Deploy
 
-One-time server setup: replace the `imbulforever.yagi.hu` block in `/etc/caddy/Caddyfile` with `deploy/Caddyfile.example`, putting your user name and a hash from `caddy hash-password` in it, then `systemctl reload caddy`.
+One-time server setup (already done on the VPS): the `imbulforever.yagi.hu` block in `/etc/caddy/Caddyfile` is `deploy/Caddyfile.example`. It imports the admin credentials from `/etc/caddy/imbulforever-admin.caddy` (owned by `root:caddy`, mode 640). Note that the server runs Caddy 2.6, where the directive is `basicauth`, not `basic_auth`.
+
+To set or change the admin user name and password (interactive, run from your machine):
+
+```sh
+ssh -t -i ~/.ssh/yagismot_deploy root@138.199.196.51 /opt/imbulforever/set-admin-password.sh
+```
+
+Only the bcrypt hash of the password is stored. Until a password is set, the file holds the hash of a random password, so `/admin` is locked for everyone.
 
 After that, every deploy is:
 
