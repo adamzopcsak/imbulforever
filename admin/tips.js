@@ -68,6 +68,12 @@
       const text = document.createElement("span");
       text.className = "tip-admin-text";
       text.textContent = tip.text;
+      if (tip.textEn) {
+        const english = document.createElement("div");
+        english.className = "tip-admin-english";
+        english.textContent = `EN: ${tip.textEn}`;
+        text.append(english);
+      }
       li.append(number, text);
       if (tip.id === currentId) {
         const now = document.createElement("span");
@@ -103,6 +109,7 @@
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const text = form.elements.text.value.trim();
+    const textEn = form.elements.textEn.value.trim();
     if (!text) {
       say("A tipp szövege nem lehet üres.", "error");
       return;
@@ -113,7 +120,7 @@
       await fetchJson("/admin/api/tips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, textEn }),
       });
       form.reset();
       say("Tipp hozzáadva a lista végére.", "success");

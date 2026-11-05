@@ -8,7 +8,8 @@ async function renderTip() {
     const { tips, currentId } = await fetchJson("/api/tips");
     const tip = tips.find((t) => t.id === currentId);
     card.hidden = !tip;
-    if (tip) text.textContent = tip.text;
+    // English text if the tip has one, otherwise the Hungarian one.
+    if (tip) text.textContent = (LANG === "en" && tip.textEn) || tip.text;
   } catch (error) {
     console.error("Failed to load tips", error); // keep whatever is shown
   }

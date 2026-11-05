@@ -236,11 +236,13 @@ class TipStore:
             tips = self._read()
             return {"tips": tips, **self._current(tips)}
 
-    def add(self, text: str) -> dict:
+    def add(self, text: str, text_en: str = "") -> dict:
         with self.lock:
             tips = self._read()
             self._current(tips)  # settle the rotation before the list changes
             tip = {"id": uuid.uuid4().hex, "text": text, "createdAt": utc_now()}
+            if text_en:
+                tip["textEn"] = text_en
             tips.append(tip)
             self._write_json(self.path, tips)
             return tip
@@ -263,15 +265,22 @@ class TipStore:
             return True
 
 
-def validate_tip(data: object) -> str:
-    """The tip text, trimmed; raises ValueError with a Hungarian message for the UI."""
+def validate_tip(data: object) -> tuple[str, str]:
+    """The Hungarian tip text and the optional English one ("" if not given), trimmed.
+
+    Raises ValueError with a Hungarian message for the UI.
+    """
     text = data.get("text") if isinstance(data, dict) else None
     if not isinstance(text, str) or not text.strip():
         raise ValueError("A tipp szövege nem lehet üres.")
     text = " ".join(text.split())
-    if len(text) > MAX_TIP_LENGTH:
+    text_en = data.get("textEn") or ""
+    if not isinstance(text_en, str):
+        raise ValueError("Az angol szöveg hibás.")
+    text_en = " ".join(text_en.split())
+    if len(text) > MAX_TIP_LENGTH or len(text_en) > MAX_TIP_LENGTH:
         raise ValueError(f"A tipp legfeljebb {MAX_TIP_LENGTH} karakter lehet.")
-    return text
+    return text, text_en
 
 
 def validate_character(data: object) -> dict:
@@ -417,11 +426,11 @@ class Handler(SimpleHTTPRequestHandler):
             if data is None:
                 return
             try:
-                text = validate_tip(data)
+                text, text_en = validate_tip(data)
             except ValueError as error:
                 self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
                 return
-            self.send_json(HTTPStatus.CREATED, self.tips.add(text))
+            self.send_json(HTTPStatus.CREATED, self.tips.add(text, text_en))
             return
         if path != "/admin/api/characters":
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})

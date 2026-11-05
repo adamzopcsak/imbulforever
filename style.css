@@ -864,6 +864,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   background: var(--bg);
 }
 .tip-admin-text { flex: 1; min-width: 0; }
+.tip-admin-english { margin-top: 2px; color: var(--muted); font-size: .9rem; }
 .tip-now {
   flex: none;
   padding: 2px 8px;
