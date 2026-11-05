@@ -41,4 +41,8 @@ After that, every deploy is:
 ./deploy.sh
 ```
 
-It copies the static files to `/var/www/imbulforever.yagi.hu`, the API to `/opt/imbulforever`, installs `deploy/imbulforever.service` and restarts it.
+It writes `version.json` (the version from `VERSION` and the deploy time in UTC, shown in the page footer in Budapest time), copies the static files to `/var/www/imbulforever.yagi.hu`, the API to `/opt/imbulforever`, installs `deploy/imbulforever.service` and restarts it.
+
+## Versioning
+
+The current version is in `VERSION` (semantic versioning). Bump it in the pull request of a change; the release time is set automatically when `./deploy.sh` runs.
