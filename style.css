@@ -404,3 +404,55 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   color: var(--muted);
   font-size: .85rem;
 }
+
+/* "i" icon at the right end of the list header, with an explanation on hover/focus */
+.info {
+  position: relative;
+  margin-left: auto;
+  align-self: center;
+  cursor: help;
+  outline: none;
+}
+
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, "Times New Roman", serif;
+  transition: color .1s, border-color .1s;
+}
+
+.info:hover .info-icon,
+.info:focus-visible .info-icon {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.info-text {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(300px, 80vw);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #000;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-size: .8rem;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .1s;
+  z-index: 2;
+}
+
+.info:hover .info-text,
+.info:focus .info-text { opacity: 1; }
