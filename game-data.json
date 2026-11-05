@@ -1,0 +1,29 @@
+{
+  "classes": {
+    "warrior": { "label": "Harcos", "color": "#C69B6D" },
+    "paladin": { "label": "Paladin", "color": "#F48CBA" },
+    "hunter": { "label": "Vadász", "color": "#AAD372" },
+    "rogue": { "label": "Zsivány", "color": "#FFF468" },
+    "priest": { "label": "Pap", "color": "#FFFFFF" },
+    "shaman": { "label": "Sámán", "color": "#0070DD" },
+    "mage": { "label": "Mágus", "color": "#3FC7EB" },
+    "warlock": { "label": "Boszorkánymester", "color": "#8788EE" },
+    "druid": { "label": "Druida", "color": "#FF7C0A" }
+  },
+  "races": {
+    "human": "Ember",
+    "dwarf": "Törpe",
+    "nightelf": "Éjtünde",
+    "gnome": "Gnóm",
+    "orc": "Ork",
+    "undead": "Élőhalott",
+    "tauren": "Tauren",
+    "troll": "Troll",
+    "skyborne": "Skyborne"
+  },
+  "roles": {
+    "pvp": "PvP",
+    "pve": "PvE"
+  },
+  "maxLevel": 60
+}
