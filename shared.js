@@ -83,9 +83,6 @@ function showNewVersionDialog(version) {
   const text = document.createElement("p");
   text.textContent = `Közben megjelent az Imbul Forever új verziója (v${version}). `
     + "Töltsd újra az oldalt, hogy a legfrissebb változatot lásd, és minden rendben működjön.";
-  const note = document.createElement("p");
-  note.className = "modal-note";
-  note.textContent = "Ha épp kitöltesz vagy szerkesztesz valamit, előbb mentsd el.";
 
   const actions = document.createElement("div");
   actions.className = "modal-actions";
@@ -99,7 +96,7 @@ function showNewVersionDialog(version) {
   reload.textContent = "Újratöltés";
   actions.append(later, reload);
 
-  dialog.append(title, text, note, actions);
+  dialog.append(title, text, actions);
   backdrop.append(dialog);
   document.body.append(backdrop);
 
