@@ -15,6 +15,9 @@ imbulforever.yagi.hu {
 		reverse_proxy 127.0.0.1:8001
 	}
 	handle {
+		# Browsers may cache the files but must check for a newer version every time (a cheap 304 if unchanged),
+		# so after a deploy nobody gets an old script with a new page.
+		header Cache-Control "no-cache"
 		root * /var/www/imbulforever.yagi.hu
 		file_server
 	}

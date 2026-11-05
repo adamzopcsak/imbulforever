@@ -183,7 +183,10 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .characters tbody tr:hover { background: var(--row-hover); }
 
-.name { font-weight: 600; white-space: nowrap; }
+/* Long names may wrap between first name and surname so the table still fits; the guild below never wraps. */
+.name { font-weight: 600; }
+.characters .name { min-width: 8.5em; }
+.characters .name .guild { white-space: nowrap; }
 
 /* The character's class color is set per row via --class-color. */
 .name { color: color-mix(in srgb, var(--class-color, var(--fg)), #000 var(--class-shade)); }
@@ -736,3 +739,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .item-tooltip .coin-gold { color: #ffd100; }
 .item-tooltip .coin-silver { color: #c7c7cf; }
 .item-tooltip .coin-copper { color: #d38a52; }
+
+
+/* Average item level on the character page, colored by grade (karakter.js itemLevelGrade) */
+.ilvl-value { font-weight: 700; font-size: 1rem; cursor: default; }
