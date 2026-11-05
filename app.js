@@ -2,7 +2,6 @@
 
 // The tip of the hour: the server says which one (it moves on to the next tip in the list every full hour).
 async function renderTip() {
-  if (LANG !== "hu") return; // Tips are written in Hungarian only; the card stays hidden.
   const card = document.getElementById("tip-card");
   const text = document.getElementById("tip-text");
   try {
