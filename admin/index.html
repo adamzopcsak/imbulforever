@@ -7,6 +7,7 @@
 <title>Imbul Forever – admin</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
 <script src="/themes.js"></script>
 </head>
 <body>
@@ -107,9 +108,17 @@
     <p id="tip-countdown" class="tip-countdown" hidden></p>
     <ul id="tip-list" class="tip-admin-list"></ul>
     <form id="tip-form" class="form tip-form">
-      <textarea name="text" rows="2" maxlength="300" placeholder="Új tipp, például: Tudtad? …" required></textarea>
+      <label>
+        <span>Magyar szöveg</span>
+        <textarea name="text" rows="2" maxlength="300" placeholder="Új tipp, például: Tudtad? …" required></textarea>
+      </label>
+      <label>
+        <span>Angol szöveg <span class="hint">(nem kötelező, ha üres, angolul is a magyar látszik)</span></span>
+        <textarea name="textEn" rows="2" maxlength="300" placeholder="For example: Did you know? …"></textarea>
+      </label>
       <div class="form-actions">
-        <button type="submit">Tipp hozzáadása</button>
+        <button type="submit" id="tip-submit">Tipp hozzáadása</button>
+        <button type="button" id="tip-cancel" class="secondary" hidden>Mégse</button>
         <p id="tip-message" class="form-message" role="status"></p>
       </div>
     </form>

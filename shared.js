@@ -15,7 +15,7 @@ function loadGameData() {
   return fetchJson("/game-data.json");
 }
 
-// "2026.11.05. 14:32" in Budapest time.
+// "2026.11.05. 14:32" in Budapest time ("2026-11-05 14:32" in English).
 function formatDateTime(date) {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("hu-HU", {
@@ -24,22 +24,23 @@ function formatDateTime(date) {
       hour: "2-digit", minute: "2-digit", hourCycle: "h23",
     }).formatToParts(date).map((p) => [p.type, p.value]),
   );
+  if (LANG === "en") return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
   return `${parts.year}.${parts.month}.${parts.day}. ${parts.hour}:${parts.minute}`;
 }
 
 // Short Hungarian relative time: "épp most", "5 perce", "3 órája", "tegnap", "4 napja", "2 hete", "3 hónapja", "1 éve".
 function formatRelative(date, now = new Date()) {
   const minutes = Math.floor((now - date) / 60000);
-  if (minutes < 1) return "épp most";
-  if (minutes < 60) return `${minutes} perce`;
+  if (minutes < 1) return t("épp most");
+  if (minutes < 60) return t("{n} perce", { n: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} órája`;
+  if (hours < 24) return t("{n} órája", { n: hours });
   const days = Math.floor(hours / 24);
-  if (days === 1) return "tegnap";
-  if (days < 7) return `${days} napja`;
-  if (days < 30) return `${Math.floor(days / 7)} hete`;
-  if (days < 365) return `${Math.floor(days / 30)} hónapja`;
-  return `${Math.floor(days / 365)} éve`;
+  if (days === 1) return t("tegnap");
+  if (days < 7) return t("{n} napja", { n: days });
+  if (days < 30) return t("{n} hete", { n: Math.floor(days / 7) });
+  if (days < 365) return t("{n} hónapja", { n: Math.floor(days / 30) });
+  return t("{n} éve", { n: Math.floor(days / 365) });
 }
 
 // Footer: "v1.0.0 · kiadva: 2026.11.05. 14:32" (release time shown in Budapest time).
@@ -50,7 +51,7 @@ async function renderFooter() {
   try {
     const { version, released } = await fetchJson("/version.json");
     if (footer) {
-      footer.textContent = `v${version} · kiadva: ${formatDateTime(new Date(released))}`;
+      footer.textContent = `v${version} · ${t("kiadva")}: ${formatDateTime(new Date(released))}`;
       footer.hidden = false;
     }
     return version;
@@ -79,21 +80,21 @@ function showNewVersionDialog(version) {
 
   const title = document.createElement("h2");
   title.id = "new-version-title";
-  title.textContent = "✨ Frissült az oldal";
+  title.textContent = t("✨ Frissült az oldal");
   const text = document.createElement("p");
-  text.textContent = `Megjelent az Imbul Forever új verziója (v${version}). `
-    + "Töltsd újra az oldalt, hogy a legfrissebb változatot lásd, és minden rendben működjön.";
+  text.textContent = t("Megjelent az Imbul Forever új verziója (v{version}). "
+    + "Töltsd újra az oldalt, hogy a legfrissebb változatot lásd, és minden rendben működjön.", { version });
 
   const actions = document.createElement("div");
   actions.className = "modal-actions";
   const later = document.createElement("button");
   later.type = "button";
   later.className = "modal-secondary";
-  later.textContent = "Később";
+  later.textContent = t("Később");
   const reload = document.createElement("button");
   reload.type = "button";
   reload.className = "modal-primary";
-  reload.textContent = "Újratöltés";
+  reload.textContent = t("Újratöltés");
   actions.append(later, reload);
 
   dialog.append(title, text, actions);
@@ -286,15 +287,15 @@ async function renderCharacterTable(tbody, countEl, gameData, renderActions, { k
   try {
     const characters = sortCharacters(await loadCharacters());
     if (characters.length === 0) {
-      showTableMessage(tbody, "Még nincs karakter a listán.");
+      showTableMessage(tbody, t("Még nincs karakter a listán."));
     } else {
       tbody.replaceChildren(...characters.map((c) => renderCharacterRow(c, gameData, renderActions)));
     }
-    countEl.textContent = `${characters.length} karakter`;
+    countEl.textContent = t("{n} karakter", { n: characters.length });
     return characters;
   } catch (error) {
     console.error("Failed to load characters", error);
-    if (!keepOnError) showTableMessage(tbody, "Nem sikerült betölteni a karaktereket.");
+    if (!keepOnError) showTableMessage(tbody, t("Nem sikerült betölteni a karaktereket."));
     return [];
   }
 }

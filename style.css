@@ -647,6 +647,8 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .admin-header .theme-control { margin-left: auto; }
 .admin-header .theme-control + .back { margin-left: 4px; }
 .site-header { justify-content: flex-start; }
+.site-header .language-control { margin-left: auto; }
+.site-header .language-control + .theme-control { margin-left: 0; }
 
 .theme-toggle,
 .theme-switch button {
@@ -861,7 +863,9 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   border-radius: 8px;
   background: var(--bg);
 }
+.tip-admin-item.editing { border-color: var(--accent); }
 .tip-admin-text { flex: 1; min-width: 0; }
+.tip-admin-english { margin-top: 2px; color: var(--muted); font-size: .9rem; }
 .tip-now {
   flex: none;
   padding: 2px 8px;

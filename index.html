@@ -6,15 +6,16 @@
 <title>Imbul Forever – karakterek</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
 <script src="/themes.js"></script>
 </head>
 <body>
 <main>
   <header class="site-header">
     <h1><a class="home-link" href="/">Imbul Forever</a></h1>
-    <nav class="site-nav" aria-label="Oldalak">
-      <a class="nav-link" href="/" aria-current="page">Lista oldal</a>
-      <a class="nav-link" href="/magyaritas/">Magyarítás</a>
+    <nav class="site-nav" aria-label="Oldalak" data-i18n-aria>
+      <a class="nav-link" href="/" aria-current="page" data-i18n>Lista oldal</a>
+      <a class="nav-link" href="/magyaritas/" data-i18n>Magyarítás</a>
     </nav>
     <!-- The admin area asks for a user name and password (Caddy basic auth). -->
     <a class="admin-button" href="/admin/">Admin</a>
@@ -22,30 +23,30 @@
 
   <section>
     <div class="list-head">
-      <h2>Karakterek</h2>
+      <h2 data-i18n>Karakterek</h2>
       <span id="count" class="count"></span>
-      <span class="info" tabindex="0" role="note" aria-label="Infó a Blizzard adatokról">
+      <span class="info" tabindex="0" role="note" aria-label="Infó a Blizzard adatokról" data-i18n-aria>
         <span class="info-icon" aria-hidden="true">i</span>
-        <span class="info-text">A Blizzard API csak a legalább 10-es szintű karaktereket adja vissza, és egy karakter adatai csak akkor frissülnek, amikor kilép a játékból.</span>
+        <span class="info-text" data-i18n>A Blizzard API csak a legalább 10-es szintű karaktereket adja vissza, és egy karakter adatai csak akkor frissülnek, amikor kilép a játékból.</span>
       </span>
     </div>
     <div class="table-wrap">
       <table class="characters">
         <thead>
           <tr>
-            <th>Név</th>
-            <th>Kié</th>
-            <th>Frakció</th>
-            <th>Kaszt</th>
-            <th class="num">Szint</th>
-            <th>Faj</th>
-            <th>Szakmák</th>
-            <th>Játékmód</th>
-            <th>Utoljára frissült</th>
+            <th data-i18n>Név</th>
+            <th data-i18n>Kié</th>
+            <th data-i18n>Frakció</th>
+            <th data-i18n>Kaszt</th>
+            <th class="num" data-i18n>Szint</th>
+            <th data-i18n>Faj</th>
+            <th data-i18n>Szakmák</th>
+            <th data-i18n>Játékmód</th>
+            <th data-i18n>Utoljára frissült</th>
           </tr>
         </thead>
         <tbody id="character-rows">
-          <tr><td colspan="9" class="empty">Betöltés…</td></tr>
+          <tr><td colspan="9" class="empty" data-i18n>Betöltés…</td></tr>
         </tbody>
       </table>
     </div>

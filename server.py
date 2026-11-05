@@ -7,7 +7,7 @@ Endpoints:
   PUT  /admin/api/characters/<id>  update a character (protected the same way)
   DELETE /admin/api/characters/<id>  delete a character (protected the same way)
   GET  /api/tips                   the tips, the one shown now and when the next one comes (every hour)
-  POST /admin/api/tips             add a tip; DELETE /admin/api/tips/<id> deletes one
+  POST /admin/api/tips             add a tip; PUT /admin/api/tips/<id> edits one; DELETE /admin/api/tips/<id> deletes one
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
 For local development, pass --static to also serve the site from a folder.
@@ -236,12 +236,29 @@ class TipStore:
             tips = self._read()
             return {"tips": tips, **self._current(tips)}
 
-    def add(self, text: str) -> dict:
+    def add(self, text: str, text_en: str = "") -> dict:
         with self.lock:
             tips = self._read()
             self._current(tips)  # settle the rotation before the list changes
             tip = {"id": uuid.uuid4().hex, "text": text, "createdAt": utc_now()}
+            if text_en:
+                tip["textEn"] = text_en
             tips.append(tip)
+            self._write_json(self.path, tips)
+            return tip
+
+    def update(self, tip_id: str, text: str, text_en: str = "") -> dict | None:
+        """Changes a tip's texts; its place in the order and the rotation stay. None if there is no such tip."""
+        with self.lock:
+            tips = self._read()
+            tip = next((tip for tip in tips if tip["id"] == tip_id), None)
+            if tip is None:
+                return None
+            tip["text"] = text
+            if text_en:
+                tip["textEn"] = text_en
+            else:
+                tip.pop("textEn", None)
             self._write_json(self.path, tips)
             return tip
 
@@ -263,15 +280,22 @@ class TipStore:
             return True
 
 
-def validate_tip(data: object) -> str:
-    """The tip text, trimmed; raises ValueError with a Hungarian message for the UI."""
+def validate_tip(data: object) -> tuple[str, str]:
+    """The Hungarian tip text and the optional English one ("" if not given), trimmed.
+
+    Raises ValueError with a Hungarian message for the UI.
+    """
     text = data.get("text") if isinstance(data, dict) else None
     if not isinstance(text, str) or not text.strip():
         raise ValueError("A tipp szövege nem lehet üres.")
     text = " ".join(text.split())
-    if len(text) > MAX_TIP_LENGTH:
+    text_en = data.get("textEn") or ""
+    if not isinstance(text_en, str):
+        raise ValueError("Az angol szöveg hibás.")
+    text_en = " ".join(text_en.split())
+    if len(text) > MAX_TIP_LENGTH or len(text_en) > MAX_TIP_LENGTH:
         raise ValueError(f"A tipp legfeljebb {MAX_TIP_LENGTH} karakter lehet.")
-    return text
+    return text, text_en
 
 
 def validate_character(data: object) -> dict:
@@ -417,11 +441,11 @@ class Handler(SimpleHTTPRequestHandler):
             if data is None:
                 return
             try:
-                text = validate_tip(data)
+                text, text_en = validate_tip(data)
             except ValueError as error:
                 self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
                 return
-            self.send_json(HTTPStatus.CREATED, self.tips.add(text))
+            self.send_json(HTTPStatus.CREATED, self.tips.add(text, text_en))
             return
         if path != "/admin/api/characters":
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})
@@ -464,6 +488,9 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a karakter már nincs a listán."})
 
     def do_PUT(self):
+        if self.path.startswith("/admin/api/tips/"):
+            self.update_tip()
+            return
         character_id = self.character_id_from_path()
         if character_id is None:
             return
@@ -477,6 +504,24 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if updated is None:
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a karakter már nincs a listán."})
+        else:
+            self.send_json(HTTPStatus.OK, updated)
+
+    def update_tip(self):
+        tip_id = self.character_id_from_path("/admin/api/tips/")
+        if tip_id is None:
+            return
+        data = self.read_json_body()
+        if data is None:
+            return
+        try:
+            text, text_en = validate_tip(data)
+        except ValueError as error:
+            self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        updated = self.tips.update(tip_id, text, text_en)
+        if updated is None:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a tipp már nincs meg."})
         else:
             self.send_json(HTTPStatus.OK, updated)
 
