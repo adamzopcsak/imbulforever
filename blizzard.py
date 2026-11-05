@@ -140,9 +140,49 @@ def equipment_from_response(response: dict) -> list:
             "quality": ((item.get("quality") or {}).get("type") or "COMMON").lower(),
             "itemLevel": (item.get("level") or {}).get("value"),
             "type": (item.get("item_subclass") or {}).get("name", ""),
+            "tooltip": tooltip_from_item(item),
         })
     order = {slot: i for i, slot in enumerate(SLOT_ORDER)}
     return sorted(items, key=lambda i: order.get(i["slot"], len(order)))
+
+
+def css_color(color: dict | None) -> str | None:
+    """Blizzard's {r, g, b, a} display color as a CSS hex color; None for plain white."""
+    if not color:
+        return None
+    r, g, b = (int(color.get(key, 255)) for key in ("r", "g", "b"))
+    return None if (r, g, b) == (255, 255, 255) else f"#{r:02x}{g:02x}{b:02x}"
+
+
+def tooltip_from_item(item: dict) -> dict:
+    """The lines of an in-game style item tooltip, using Blizzard's own display strings."""
+    def text(value, key="display_string"):
+        return (value or {}).get(key) or None
+
+    subclass = None if item.get("is_subclass_hidden") else (item.get("item_subclass") or {}).get("name")
+    weapon = item.get("weapon") or {}
+    price = (item.get("sell_price") or {}).get("display_strings") or {}
+    tooltip = {
+        "binding": (item.get("binding") or {}).get("name"),
+        "inventoryType": (item.get("inventory_type") or {}).get("name"),
+        "subclass": subclass,
+        "damage": text(weapon.get("damage")),
+        "speed": text(weapon.get("attack_speed")),
+        "dps": text(weapon.get("dps")),
+        "armor": text((item.get("armor") or {}).get("display")),
+        "stats": [
+            {"text": stat["display"]["display_string"], "color": css_color(stat["display"].get("color"))}
+            for stat in item.get("stats", []) if (stat.get("display") or {}).get("display_string")
+        ],
+        "enchantments": [e["display_string"] for e in item.get("enchantments", []) if e.get("display_string")],
+        "spells": [s["description"] for s in item.get("spells", []) if s.get("description")],
+        "durability": text(item.get("durability")),
+        "requirement": text((item.get("requirements") or {}).get("level")),
+        "description": item.get("description"),
+        "sellPrice": {k: int(price[k]) for k in ("gold", "silver", "copper") if str(price.get(k, "")).isdigit()},
+    }
+    # Leave out empty lines so the stored data stays small.
+    return {key: value for key, value in tooltip.items() if value}
 
 
 class IconCache:

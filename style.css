@@ -689,3 +689,50 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .theme-status.on { color: var(--success); font-weight: 600; }
 .panel-note { color: var(--muted); font-size: .9rem; margin: -8px 0 12px; }
 .seasons-panel { margin-top: 32px; }
+
+/* Item tooltip on the character page: in-game style, shown on hover or focus (tap) */
+.gear-item.has-tooltip { position: relative; cursor: default; outline: none; }
+.gear-item.has-tooltip:focus-visible { border-color: var(--accent); }
+
+.item-tooltip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  width: max(100%, 280px);
+  max-width: min(340px, 90vw);
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #5a6170;
+  background: rgba(8, 10, 16, 0.96);
+  color: #ffffff;
+  font-size: .85rem;
+  line-height: 1.45;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .1s;
+}
+
+.gear-item.has-tooltip:hover .item-tooltip,
+.gear-item.has-tooltip:focus .item-tooltip { opacity: 1; visibility: visible; }
+
+/* The tooltip keeps the in-game colors in every theme */
+.item-tooltip .tt-name { font-size: .95rem; font-weight: 700; }
+.item-tooltip .quality-poor { color: #9d9d9d; }
+.item-tooltip .quality-common { color: #ffffff; }
+.item-tooltip .quality-uncommon { color: #1eff00; }
+.item-tooltip .quality-rare { color: #0070dd; }
+.item-tooltip .quality-epic { color: #a335ee; }
+.item-tooltip .quality-legendary { color: #ff8000; }
+.item-tooltip .tt-ilvl { color: #ffd100; }
+.item-tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+.item-tooltip .tt-right { text-align: right; }
+.item-tooltip .tt-green { color: #1eff00; }
+.item-tooltip .tt-description { color: #ffd100; }
+.item-tooltip .tt-price { margin-top: 4px; }
+.item-tooltip .coin { font-weight: 600; }
+.item-tooltip .coin-gold { color: #ffd100; }
+.item-tooltip .coin-silver { color: #c7c7cf; }
+.item-tooltip .coin-copper { color: #d38a52; }
