@@ -19,7 +19,7 @@ printf '{"version": "%s", "released": "%s"}\n' "$VERSION" "$(date -u +%Y-%m-%dT%
 
 ssh -i "$KEY" "$HOST" "mkdir -p $WEB/admin $WEB/karakter $WEB/magyaritas $APP"
 scp -i "$KEY" index.html style.css themes.js shared.js app.js game-data.json favicon.svg version.json "$HOST:$WEB/"
-scp -i "$KEY" admin/index.html admin/admin.js admin/seasons.js "$HOST:$WEB/admin/"
+scp -i "$KEY" admin/index.html admin/admin.js admin/seasons.js admin/tips.js "$HOST:$WEB/admin/"
 scp -i "$KEY" karakter/index.html karakter/karakter.js "$HOST:$WEB/karakter/"
 scp -i "$KEY" magyaritas/index.html "$HOST:$WEB/magyaritas/"
 scp -i "$KEY" -r icons "$HOST:$WEB/"
