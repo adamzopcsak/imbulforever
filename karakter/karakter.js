@@ -23,14 +23,6 @@ function iconWithName(src, name) {
   return span;
 }
 
-// Average item level of the equipped gear; shirt, tabard and ammo do not count.
-function averageItemLevel(items) {
-  const levels = items
-    .filter((item) => !["SHIRT", "TABARD", "AMMO"].includes(item.slot) && item.itemLevel)
-    .map((item) => item.itemLevel);
-  return levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length) : null;
-}
-
 // Blizzard's EU icon host misses some Forever icons (403) that its US host has,
 // so on an error try the US one; if that fails too, show an empty icon box.
 function setItemIcon(img, url) {

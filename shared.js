@@ -64,6 +64,14 @@ function loadCharacters() {
 
 // Highest level first; within a level, whoever reached it first. Characters without a recorded time
 // (they reached their level before it was tracked) count as earliest; then by name.
+// Average item level of the equipped gear; shirt, tabard and ammo do not count. null without gear.
+function averageItemLevel(items) {
+  const levels = items
+    .filter((item) => !["SHIRT", "TABARD", "AMMO"].includes(item.slot) && item.itemLevel)
+    .map((item) => item.itemLevel);
+  return levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length) : null;
+}
+
 function sortCharacters(characters) {
   return characters.sort((a, b) =>
     b.level - a.level
@@ -168,6 +176,7 @@ function renderCharacterRow(character, gameData, renderActions) {
     factionName ? iconCell(`/icons/faction/${character.faction}.jpg`, factionName) : cell(""),
     iconCell(`/icons/class/${character.class}.jpg`, cls.name),
     cell(String(character.level), "num"),
+    cell(averageItemLevel(character.equipment || []) ?? "—", "num ilvl"),
     iconCell(`/icons/race/${character.race}_${gender}.jpg`, raceName),
     professionsCell(character.professions, gameData),
   );

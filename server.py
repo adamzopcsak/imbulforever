@@ -226,6 +226,13 @@ class Handler(SimpleHTTPRequestHandler):
         self.static_dir = static_dir
         super().__init__(*args, directory=static_dir or str(APP_DIR), **kwargs)
 
+    def end_headers(self):
+        # Static files (local development): let the browser cache them, but always check for a newer version,
+        # so a changed script is never mixed with a newer page. Caddy does the same in production.
+        if self.static_dir and "Cache-Control" not in "".join(map(str, getattr(self, "_headers_buffer", []))):
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def send_json(self, status: HTTPStatus, payload: object) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
