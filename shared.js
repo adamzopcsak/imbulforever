@@ -31,8 +31,7 @@ function cell(text, className) {
 }
 
 // An icon with its English name shown as a tooltip on hover.
-function iconCell(src, name) {
-  const td = document.createElement("td");
+function icon(src, name) {
   const wrapper = document.createElement("span");
   wrapper.className = "icon";
   wrapper.dataset.tooltip = name;
@@ -42,7 +41,25 @@ function iconCell(src, name) {
   img.width = 28;
   img.height = 28;
   wrapper.append(img);
-  td.append(wrapper);
+  return wrapper;
+}
+
+function iconCell(src, name) {
+  const td = document.createElement("td");
+  td.append(icon(src, name));
+  return td;
+}
+
+function professionsCell(professions, gameData) {
+  const td = document.createElement("td");
+  const list = document.createElement("span");
+  list.className = "icon-list";
+  for (const key of professions || []) {
+    const profession = gameData.professions[key];
+    if (!profession) continue; // e.g. a profession no longer offered
+    list.append(icon(`/icons/profession/${key}.jpg`, profession.name));
+  }
+  td.append(list);
   return td;
 }
 
@@ -60,6 +77,7 @@ function renderCharacterRow(character, gameData, renderActions) {
     iconCell(`/icons/class/${character.class}.jpg`, cls.name),
     cell(String(character.level), "num"),
     iconCell(`/icons/race/${character.race}_${gender}.jpg`, raceName),
+    professionsCell(character.professions, gameData),
   );
 
   const roleTd = document.createElement("td");

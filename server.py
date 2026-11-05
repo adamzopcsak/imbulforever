@@ -116,6 +116,15 @@ def validate_character(data: object) -> dict:
     if not isinstance(level, int) or isinstance(level, bool) or not 1 <= level <= GAME_DATA["maxLevel"]:
         raise ValueError(f"A szint 1 és {GAME_DATA['maxLevel']} közötti szám lehet.")
 
+    professions = data.get("professions", [])
+    if not isinstance(professions, list) or any(p not in GAME_DATA["professions"] for p in professions):
+        raise ValueError("Ismeretlen szakma.")
+    # Keep the game-data order and drop duplicates.
+    professions = [p for p in GAME_DATA["professions"] if p in professions]
+    primary = [p for p in professions if GAME_DATA["professions"][p]["type"] == "primary"]
+    if len(primary) > GAME_DATA["maxPrimaryProfessions"]:
+        raise ValueError(f"Legfeljebb {GAME_DATA['maxPrimaryProfessions']} fő szakma választható.")
+
     return {
         "name": name_field("name", "név"),
         "surname": name_field("surname", "vezetéknév"),
@@ -124,6 +133,7 @@ def validate_character(data: object) -> dict:
         "role": choice("role", "szerep", GAME_DATA["roles"]),
         "race": choice("race", "faj", GAME_DATA["races"]),
         "gender": choice("gender", "nem", GAME_DATA["genders"]),
+        "professions": professions,
     }
 
 

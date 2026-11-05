@@ -29,5 +29,17 @@
     "pvp": "PvP",
     "pve": "PvE"
   },
+  "professions": {
+    "alchemy": { "name": "Alchemy", "type": "primary" },
+    "blacksmithing": { "name": "Blacksmithing", "type": "primary" },
+    "enchanting": { "name": "Enchanting", "type": "primary" },
+    "engineering": { "name": "Engineering", "type": "primary" },
+    "leatherworking": { "name": "Leatherworking", "type": "primary" },
+    "tailoring": { "name": "Tailoring", "type": "primary" },
+    "herbalism": { "name": "Herbalism", "type": "primary" },
+    "mining": { "name": "Mining", "type": "primary" },
+    "skinning": { "name": "Skinning", "type": "primary" }
+  },
+  "maxPrimaryProfessions": 2,
   "maxLevel": 60
 }

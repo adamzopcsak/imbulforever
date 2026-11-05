@@ -44,6 +44,31 @@ async function main() {
   fillSelect(fields.role, Object.entries(gameData.roles));
   fields.level.max = gameData.maxLevel;
 
+  // Profession checkboxes, shown as icons with the English name on hover.
+  const professionOptions = document.getElementById("profession-options");
+  for (const [key, profession] of Object.entries(gameData.professions)) {
+    const label = document.createElement("label");
+    label.className = "profession-option";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = "professions";
+    checkbox.value = key;
+    checkbox.setAttribute("aria-label", profession.name);
+    label.append(checkbox, icon(`/icons/profession/${key}.jpg`, profession.name));
+    professionOptions.append(label);
+  }
+  const professionBoxes = [...professionOptions.querySelectorAll("input")];
+  const isPrimary = (box) => gameData.professions[box.value].type === "primary";
+
+  professionOptions.addEventListener("change", (event) => {
+    const box = event.target;
+    const checkedPrimary = professionBoxes.filter((b) => b.checked && isPrimary(b));
+    if (box.checked && isPrimary(box) && checkedPrimary.length > gameData.maxPrimaryProfessions) {
+      box.checked = false;
+      setMessage(message, `Legfeljebb ${gameData.maxPrimaryProfessions} fő szakma választható.`, "error");
+    }
+  });
+
   function highlightEditedRow() {
     for (const row of tbody.rows) {
       row.classList.toggle("editing", editingId !== null && row.dataset.id === editingId);
@@ -59,6 +84,8 @@ async function main() {
     fields.race.value = character.race;
     fields.gender.value = character.gender || "male";
     fields.role.value = character.role;
+    const professions = character.professions || [];
+    for (const box of professionBoxes) box.checked = professions.includes(box.value);
     formTitle.textContent = `${character.name} ${character.surname} szerkesztése`;
     submitButton.textContent = "Mentés";
     cancelButton.hidden = false;
@@ -111,6 +138,7 @@ async function main() {
       race: fields.race.value,
       gender: fields.gender.value,
       role: fields.role.value,
+      professions: professionBoxes.filter((b) => b.checked).map((b) => b.value),
     };
 
     if (!character.name || !character.surname) {

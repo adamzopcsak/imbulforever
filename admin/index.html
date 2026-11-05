@@ -47,6 +47,10 @@
         <span>Roleset</span>
         <select name="role" required></select>
       </label>
+      <fieldset class="profession-picker">
+        <legend>Professions <span class="hint">(legfeljebb 2)</span></legend>
+        <div id="profession-options" class="profession-options"></div>
+      </fieldset>
       <div class="form-actions">
         <button type="submit" id="submit-button">Hozzáadás</button>
         <button type="button" id="cancel-button" class="secondary" hidden>Mégse</button>
@@ -67,12 +71,13 @@
           <th>Kaszt</th>
           <th class="num">Szint</th>
           <th>Faj</th>
+          <th>Professions</th>
           <th>Roleset</th>
           <th><span class="visually-hidden">Műveletek</span></th>
         </tr>
       </thead>
       <tbody id="character-rows">
-        <tr><td colspan="6" class="empty">Betöltés…</td></tr>
+        <tr><td colspan="7" class="empty">Betöltés…</td></tr>
       </tbody>
     </table>
   </section>
