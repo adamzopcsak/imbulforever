@@ -140,12 +140,14 @@ async function main() {
     return td;
   }
 
-  async function refreshTable() {
-    await renderCharacterTable(tbody, count, gameData, renderActions);
+  async function refreshTable(options) {
+    await renderCharacterTable(tbody, count, gameData, renderActions, options);
     highlightEditedRow();
   }
 
   await refreshTable();
+  // Background refresh: keeps the list and the "Frissítve" times current; the form is not touched.
+  startAutoRefresh(() => refreshTable({ keepOnError: true }));
 
   cancelButton.addEventListener("click", () => {
     stopEditing();
