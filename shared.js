@@ -138,11 +138,17 @@ function relativeTime(iso) {
   return span;
 }
 
-// Last login from the Blizzard API; "—" while the API does not know the character.
-function lastLoginCell(lastLogin) {
+// When the character's data last changed: for characters synced from Blizzard, when the profile was
+// refreshed (Blizzard saves it at logout); otherwise when the admin last changed it. "—" if unknown.
+function lastRefresh(character) {
+  return character.blizzard ? character.refreshedAt || character.lastLogin : character.updatedAt;
+}
+
+function lastRefreshCell(character) {
   const td = document.createElement("td");
   td.className = "last-login";
-  if (lastLogin) td.append(relativeTime(lastLogin));
+  const time = lastRefresh(character);
+  if (time) td.append(relativeTime(time));
   else td.textContent = "—";
   return td;
 }
@@ -187,7 +193,7 @@ function renderCharacterRow(character, gameData, renderActions) {
     role.textContent = gameData.roles[character.role] || character.role;
     roleTd.append(role);
   }
-  tr.append(roleTd, lastLoginCell(character.lastLogin));
+  tr.append(roleTd, lastRefreshCell(character));
 
   if (renderActions) tr.append(renderActions(character));
   return tr;

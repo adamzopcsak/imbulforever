@@ -35,7 +35,7 @@ MAX_NAME_LENGTH = 24
 MAX_OWNER_LENGTH = 40
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
-SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment")
+SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment", "refreshedAt")
 # Old roleset values -> current ones.
 ROLE_MIGRATIONS = {"pve": "normal"}
 
@@ -139,6 +139,16 @@ class CharacterStore:
                 game_changed = any(c.get(k) != v for k, v in fields.items() if k not in SYNC_ONLY_FIELDS)
                 if "level" in fields and c.get("level") != fields["level"]:
                     c["levelReachedAt"] = utc_now()
+                # Blizzard saves a profile when the character logs out, with the login time of that session:
+                # a new lastLogin means the character has just logged out and its data is fresh now. The first
+                # time a character is seen, the best guess is its last login.
+                if "lastLogin" in fields:
+                    if c.get("lastLogin") and c["lastLogin"] != fields["lastLogin"]:
+                        c["refreshedAt"] = utc_now()
+                        changed = True
+                    elif not c.get("refreshedAt"):
+                        c["refreshedAt"] = fields["lastLogin"]
+                        changed = True
                 if any(c.get(k) != v for k, v in fields.items()):
                     c.update(fields)
                     changed = True

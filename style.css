@@ -829,3 +829,6 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 @media (max-width: 560px) {
   .site-nav { margin-left: -12px; }
 }
+
+/* The last header ("Utoljára frissült") may wrap on narrow screens so the table still fits */
+.characters th:last-child { white-space: normal; }
