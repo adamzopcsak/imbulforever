@@ -1,14 +1,12 @@
-# Site block for /etc/caddy/Caddyfile (replaces the static-only block).
-# Create the password hash on the server with:  caddy hash-password
-# then put your user name and the hash in place of USER and HASH.
+# Site block for /etc/caddy/Caddyfile.
+# The admin credentials live in a separate file, /etc/caddy/imbulforever-admin.caddy,
+# written by deploy/set-admin-password.sh, so this block never contains a password hash.
 
 imbulforever.yagi.hu {
 	encode gzip
 
-	# Only the owner may open the admin page and call the write API.
-	basic_auth /admin* {
-		USER HASH
-	}
+	# Admin page and write API: basic auth, credentials in imbulforever-admin.caddy
+	import /etc/caddy/imbulforever-admin.caddy
 
 	handle /api/* {
 		reverse_proxy 127.0.0.1:8001
