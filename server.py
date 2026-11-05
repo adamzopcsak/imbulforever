@@ -4,6 +4,7 @@ Endpoints:
   GET  /api/characters        public list of characters
   POST /admin/api/characters       add a character (protected by Caddy basic auth in production)
   PUT  /admin/api/characters/<id>  update a character (protected the same way)
+  DELETE /admin/api/characters/<id>  delete a character (protected the same way)
 
 In production Caddy serves the static files and proxies /api/* and /admin/api/* here.
 For local development, pass --static to also serve the site from a folder.
@@ -90,6 +91,16 @@ class CharacterStore:
             self._write(characters)
             return characters[index]
 
+    def delete(self, character_id: str) -> bool:
+        """Remove the character; returns False if there is no character with this id."""
+        with self.lock:
+            characters = self._read()
+            remaining = [c for c in characters if c.get("id") != character_id]
+            if len(remaining) == len(characters):
+                return False
+            self._write(remaining)
+            return True
+
 
 def validate_character(data: object) -> dict:
     """Return a clean character dict, or raise ValueError with a Hungarian message for the UI."""
@@ -126,6 +137,11 @@ def validate_character(data: object) -> dict:
     if len(primary) > GAME_DATA["maxPrimaryProfessions"]:
         raise ValueError(f"Legfeljebb {GAME_DATA['maxPrimaryProfessions']} fő szakma választható.")
 
+    # The roleset is optional: an empty string means "not set".
+    role = data.get("role") or ""
+    if role and role not in GAME_DATA["roles"]:
+        raise ValueError("Ismeretlen roleset.")
+
     owner = data.get("owner", "")
     if not isinstance(owner, str):
         raise ValueError("Hibás kérés.")
@@ -139,7 +155,7 @@ def validate_character(data: object) -> dict:
         "owner": owner,
         "class": choice("class", "kaszt", GAME_DATA["classes"]),
         "level": level,
-        "role": choice("role", "szerep", GAME_DATA["roles"]),
+        "role": role,
         "race": choice("race", "faj", GAME_DATA["races"]),
         "gender": choice("gender", "nem", GAME_DATA["genders"]),
         "faction": choice("faction", "frakció", GAME_DATA["factions"]),
@@ -208,12 +224,28 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             self.send_json(HTTPStatus.CREATED, created)
 
-    def do_PUT(self):
+    def character_id_from_path(self) -> str | None:
+        """The id in /admin/api/characters/<id>; sends a 404 and returns None if the path does not match."""
         prefix = "/admin/api/characters/"
         path = self.path.split("?", 1)[0]
         character_id = path[len(prefix):] if path.startswith(prefix) else ""
         if not character_id or "/" in character_id:
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Nem található."})
+            return None
+        return character_id
+
+    def do_DELETE(self):
+        character_id = self.character_id_from_path()
+        if character_id is None:
+            return
+        if self.store.delete(character_id):
+            self.send_json(HTTPStatus.OK, {"deleted": character_id})
+        else:
+            self.send_json(HTTPStatus.NOT_FOUND, {"error": "Ez a karakter már nincs a listán."})
+
+    def do_PUT(self):
+        character_id = self.character_id_from_path()
+        if character_id is None:
             return
         character = self.read_character()
         if character is None:

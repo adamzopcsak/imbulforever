@@ -358,3 +358,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* Free-text owner ("Kié") column */
 .owner { color: var(--muted); }
+
+/* Admin: delete button next to the edit button */
+.actions .edit-button + .edit-button { margin-left: 6px; }
+.delete-button:hover { color: #f07167; border-color: #f07167; }
