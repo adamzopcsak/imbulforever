@@ -54,18 +54,27 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .characters th,
 .characters td {
-  padding: 12px 16px;
+  padding: 12px 8px;
   text-align: left;
   border-bottom: 1px solid var(--line);
 }
 
+/* Keep headers on one line so every column stays readable. */
+.characters th { white-space: nowrap; }
+
+.characters th:first-child,
+.characters td:first-child { padding-left: 16px; }
+
+.characters th:last-child,
+.characters td:last-child { padding-right: 16px; }
+
 .characters tbody tr:last-child td { border-bottom: none; }
 
 .characters th {
-  font-size: .8rem;
+  font-size: .75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: .04em;
   color: var(--muted);
 }
 
