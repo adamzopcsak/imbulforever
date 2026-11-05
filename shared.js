@@ -163,7 +163,8 @@ function showTableMessage(tbody, text) {
 }
 
 // Fills the character table and the count label; returns the loaded characters.
-async function renderCharacterTable(tbody, countEl, gameData, renderActions) {
+// With keepOnError (background refresh) a failed load leaves the current table as it is.
+async function renderCharacterTable(tbody, countEl, gameData, renderActions, { keepOnError = false } = {}) {
   try {
     const characters = sortCharacters(await loadCharacters());
     if (characters.length === 0) {
@@ -175,7 +176,29 @@ async function renderCharacterTable(tbody, countEl, gameData, renderActions) {
     return characters;
   } catch (error) {
     console.error("Failed to load characters", error);
-    showTableMessage(tbody, "Nem sikerült betölteni a karaktereket.");
+    if (!keepOnError) showTableMessage(tbody, "Nem sikerült betölteni a karaktereket.");
     return [];
   }
+}
+
+// Calls refresh every intervalMs while the page is visible, and right away when it becomes visible again,
+// so the list and the "Frissítve" times stay current without reloading the page.
+function startAutoRefresh(refresh, intervalMs = 60_000) {
+  let timer = null;
+  const start = () => {
+    if (timer === null) timer = setInterval(refresh, intervalMs);
+  };
+  const stop = () => {
+    clearInterval(timer);
+    timer = null;
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      stop();
+    } else {
+      refresh();
+      start();
+    }
+  });
+  if (!document.hidden) start();
 }

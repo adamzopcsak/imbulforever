@@ -6,6 +6,7 @@ async function main() {
   try {
     const gameData = await loadGameData();
     await renderCharacterTable(tbody, count, gameData);
+    startAutoRefresh(() => renderCharacterTable(tbody, count, gameData, null, { keepOnError: true }));
   } catch (error) {
     console.error("Failed to load game data", error);
     showTableMessage(tbody, "Nem sikerült betölteni a karaktereket.");
