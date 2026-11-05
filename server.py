@@ -17,6 +17,7 @@ import shutil
 import tempfile
 import threading
 import uuid
+from datetime import datetime, timezone
 from functools import partial
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -26,6 +27,13 @@ APP_DIR = Path(__file__).resolve().parent
 MAX_BODY_BYTES = 10_000
 MAX_NAME_LENGTH = 24
 MAX_OWNER_LENGTH = 40
+
+
+
+def utc_now() -> str:
+    """Current time as an ISO 8601 UTC string, e.g. 2026-11-05T13:36:00Z."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
 
 GAME_DATA = json.loads((APP_DIR / "game-data.json").read_text(encoding="utf-8"))
 
@@ -74,7 +82,7 @@ class CharacterStore:
         with self.lock:
             characters = self._read()
             self._check_unique_name(characters, character)
-            character = {"id": uuid.uuid4().hex, **character}
+            character = {"id": uuid.uuid4().hex, **character, "updatedAt": utc_now()}
             characters.append(character)
             self._write(characters)
             return character
@@ -87,7 +95,13 @@ class CharacterStore:
             if index is None:
                 return None
             self._check_unique_name(characters, character, ignore_id=character_id)
+            old = characters[index]
+            # Only a real change counts as an update; saving the same data keeps the old time.
+            changed = any(old.get(key) != value for key, value in character.items())
+            updated_at = utc_now() if changed else old.get("updatedAt")
             characters[index] = {"id": character_id, **character}
+            if updated_at:
+                characters[index]["updatedAt"] = updated_at
             self._write(characters)
             return characters[index]
 

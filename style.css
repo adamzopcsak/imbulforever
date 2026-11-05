@@ -18,7 +18,7 @@ body {
 }
 
 main {
-  max-width: 860px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -196,7 +196,8 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* Class and race icons with a tooltip showing the English name */
 
-.icon {
+.icon,
+.tooltip {
   position: relative;
   display: inline-flex;
   vertical-align: middle;
@@ -208,7 +209,8 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   border: 1px solid var(--line);
 }
 
-.icon::after {
+.icon::after,
+.tooltip::after {
   content: attr(data-tooltip);
   position: absolute;
   left: 50%;
@@ -227,7 +229,8 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   z-index: 1;
 }
 
-.icon:hover::after { opacity: 1; }
+.icon:hover::after,
+.tooltip:hover::after { opacity: 1; }
 
 /* Homepage header with the admin button */
 
@@ -365,10 +368,17 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* Footer with version and release time */
 .site-footer {
-  max-width: 860px;
+  max-width: 1000px;
   margin: 40px auto 0;
   color: var(--muted);
   font-size: .8rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+/* "Frissítve" column: relative time, exact time on hover */
+.updated { color: var(--muted); font-size: .9rem; white-space: nowrap; }
+.updated .tooltip { cursor: default; }
+
+/* On narrow screens the table scrolls sideways instead of the whole page. */
+.table-wrap { position: relative; overflow-x: auto; }
