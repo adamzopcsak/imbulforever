@@ -12,9 +12,9 @@ const SEASONS = {
   christmas: {
     label: "Karácsonyi",
     icon: "🎄",
-    start: [12, 15], // month, day; both days included
+    start: [12, 24], // month, day; both days included
     end: [12, 30],
-    rule: "Minden évben december 15–30.",
+    rule: "Minden évben december 24–30.",
   },
 };
 

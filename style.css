@@ -64,7 +64,7 @@
 :root[data-theme="light"] .tooltip::after,
 :root[data-theme="light"] .info-text { color: #f6f5f1; }
 
-/* Christmas theme (the default from December 15 to 30): deep pine green with cranberry red and candle gold,
+/* Christmas theme (the default from December 24 to 30): deep pine green with cranberry red and candle gold,
    and a little snow; kept calm on purpose */
 :root[data-season="christmas"][data-theme="dark"] {
   --bg: #0b1a13;
