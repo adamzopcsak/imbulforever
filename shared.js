@@ -30,16 +30,34 @@ function cell(text, className) {
   return td;
 }
 
+// An icon with its English name shown as a tooltip on hover.
+function iconCell(src, name) {
+  const td = document.createElement("td");
+  const wrapper = document.createElement("span");
+  wrapper.className = "icon";
+  wrapper.dataset.tooltip = name;
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = name;
+  img.width = 28;
+  img.height = 28;
+  wrapper.append(img);
+  td.append(wrapper);
+  return td;
+}
+
 function renderCharacterRow(character, gameData) {
-  const cls = gameData.classes[character.class] || { label: character.class, color: null };
+  const cls = gameData.classes[character.class] || { name: character.class, color: null };
+  const raceName = gameData.races[character.race] || character.race;
+  const gender = character.gender === "female" ? "female" : "male";
   const tr = document.createElement("tr");
   if (cls.color) tr.style.setProperty("--class-color", cls.color);
 
   tr.append(
     cell(`${character.name} ${character.surname}`, "name"),
-    cell(cls.label, "class-name"),
+    iconCell(`/icons/class/${character.class}.jpg`, cls.name),
     cell(String(character.level), "num"),
-    cell(gameData.races[character.race] || character.race),
+    iconCell(`/icons/race/${character.race}_${gender}.jpg`, raceName),
   );
 
   const roleTd = document.createElement("td");

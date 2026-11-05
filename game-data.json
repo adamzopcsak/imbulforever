@@ -1,25 +1,29 @@
 {
   "classes": {
-    "warrior": { "label": "Harcos", "color": "#C69B6D" },
-    "paladin": { "label": "Paladin", "color": "#F48CBA" },
-    "hunter": { "label": "Vadász", "color": "#AAD372" },
-    "rogue": { "label": "Zsivány", "color": "#FFF468" },
-    "priest": { "label": "Pap", "color": "#FFFFFF" },
-    "shaman": { "label": "Sámán", "color": "#0070DD" },
-    "mage": { "label": "Mágus", "color": "#3FC7EB" },
-    "warlock": { "label": "Boszorkánymester", "color": "#8788EE" },
-    "druid": { "label": "Druida", "color": "#FF7C0A" }
+    "warrior": { "name": "Warrior", "color": "#C69B6D" },
+    "paladin": { "name": "Paladin", "color": "#F48CBA" },
+    "hunter": { "name": "Hunter", "color": "#AAD372" },
+    "rogue": { "name": "Rogue", "color": "#FFF468" },
+    "priest": { "name": "Priest", "color": "#FFFFFF" },
+    "shaman": { "name": "Shaman", "color": "#0070DD" },
+    "mage": { "name": "Mage", "color": "#3FC7EB" },
+    "warlock": { "name": "Warlock", "color": "#8788EE" },
+    "druid": { "name": "Druid", "color": "#FF7C0A" }
   },
   "races": {
-    "human": "Ember",
-    "dwarf": "Törpe",
-    "nightelf": "Éjtünde",
-    "gnome": "Gnóm",
-    "orc": "Ork",
-    "undead": "Élőhalott",
+    "human": "Human",
+    "dwarf": "Dwarf",
+    "nightelf": "Night Elf",
+    "gnome": "Gnome",
+    "orc": "Orc",
+    "undead": "Undead",
     "tauren": "Tauren",
     "troll": "Troll",
     "skyborne": "Skyborne"
+  },
+  "genders": {
+    "male": "Férfi",
+    "female": "Nő"
   },
   "roles": {
     "pvp": "PvP",
