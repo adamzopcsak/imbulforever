@@ -17,9 +17,10 @@ cd "$(dirname "$0")"
 VERSION=$(tr -d '[:space:]' < VERSION)
 printf '{"version": "%s", "released": "%s"}\n' "$VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
 
-ssh -i "$KEY" "$HOST" "mkdir -p $WEB/admin $APP"
+ssh -i "$KEY" "$HOST" "mkdir -p $WEB/admin $WEB/karakter $APP"
 scp -i "$KEY" index.html style.css shared.js app.js game-data.json favicon.svg version.json "$HOST:$WEB/"
 scp -i "$KEY" admin/index.html admin/admin.js "$HOST:$WEB/admin/"
+scp -i "$KEY" karakter/index.html karakter/karakter.js "$HOST:$WEB/karakter/"
 scp -i "$KEY" -r icons "$HOST:$WEB/"
 scp -i "$KEY" server.py blizzard.py game-data.json characters.json deploy/set-admin-password.sh deploy/set-bnet-credentials.sh "$HOST:$APP/"
 scp -i "$KEY" deploy/imbulforever.service "$HOST:/etc/systemd/system/imbulforever.service"

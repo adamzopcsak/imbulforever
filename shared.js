@@ -71,9 +71,19 @@ function sortCharacters(characters) {
     || a.name.localeCompare(b.name, "hu"));
 }
 
-// Character name, with the guild below it as "<Guild>" if the Blizzard API reports one.
+function characterUrl(character) {
+  return `/karakter/?id=${encodeURIComponent(character.id)}`;
+}
+
+// Character name (links to the character page), with the guild below it as "<Guild>" if the Blizzard API reports one.
 function nameCell(character) {
-  const td = cell(`${character.name} ${character.surname}`, "name");
+  const td = document.createElement("td");
+  td.className = "name";
+  const link = document.createElement("a");
+  link.className = "name-link";
+  link.href = characterUrl(character);
+  link.textContent = `${character.name} ${character.surname}`;
+  td.append(link);
   if (character.guild) {
     const guild = document.createElement("div");
     guild.className = "guild";
