@@ -743,3 +743,89 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* Average item level on the character page, colored by grade (karakter.js itemLevelGrade) */
 .ilvl-value { font-weight: 700; font-size: 1rem; cursor: default; }
+
+/* Page navigation in the header: "List oldal" and "Magyarítás" */
+.site-header { flex-wrap: wrap; row-gap: 12px; }
+.site-nav { display: flex; gap: 4px; margin-left: 12px; }
+.nav-link {
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .1s, background .1s;
+}
+.nav-link:hover { color: var(--fg); background: var(--row-hover); }
+.nav-link[aria-current="page"] { color: var(--accent); background: var(--badge-bg); }
+
+/* Magyarítás page */
+.hu-page h2 { font-size: 1.4rem; margin-bottom: 4px; }
+.hu-lead { color: var(--muted); margin-bottom: 20px; }
+
+.hu-note {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+}
+.hu-note code {
+  font-size: .9em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  word-break: break-all;
+}
+
+.addon-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+
+.addon-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.addon-step {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--badge-bg);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.addon-body { flex: 1; min-width: 0; }
+.addon-body h3 { font-size: 1.05rem; margin-bottom: 2px; }
+.addon-desc { color: var(--fg); font-size: .92rem; }
+.addon-meta { color: var(--muted); font-size: .8rem; margin-top: 2px; }
+
+.addon-download {
+  flex: none;
+  padding: 9px 16px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.addon-download:hover { filter: brightness(1.08); }
+
+@media (max-width: 560px) {
+  .addon-card { flex-wrap: wrap; }
+  .addon-download { width: 100%; text-align: center; }
+}
+@media (max-width: 560px) {
+  .site-nav { margin-left: -12px; }
+}
