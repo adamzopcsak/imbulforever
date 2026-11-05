@@ -177,9 +177,9 @@ function renderCharacter(container, character, gameData) {
   for (const key of professions) {
     professionList.append(iconWithName(`/icons/profession/${key}.jpg`, gameData.professions[key].name));
   }
-  details.append(detail("Professions", professions.length ? professionList : "—"));
+  details.append(detail("Szakmák", professions.length ? professionList : "—"));
 
-  details.append(detail("Roleset", character.role ? (gameData.roles[character.role] || character.role) : "—"));
+  details.append(detail("Játékmód", character.role ? (gameData.roles[character.role] || character.role) : "—"));
   const refreshed = lastRefresh(character);
   details.append(detail("Utoljára frissült", refreshed ? relativeTime(refreshed) : "—"));
   details.append(detail("Utolsó belépés", character.lastLogin ? relativeTime(character.lastLogin) : "—"));

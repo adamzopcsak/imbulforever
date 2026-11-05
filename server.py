@@ -312,7 +312,7 @@ def validate_character(data: object) -> dict:
     # The roleset is optional: an empty string means "not set".
     role = data.get("role") or ""
     if role and role not in GAME_DATA["roles"]:
-        raise ValueError("Ismeretlen roleset.")
+        raise ValueError("Ismeretlen játékmód.")
 
     owner = data.get("owner", "")
     if not isinstance(owner, str):
