@@ -1,0 +1,105 @@
+:root {
+  --bg: #0f1114;
+  --panel: #171a1f;
+  --line: #262b33;
+  --fg: #e9ecf1;
+  --muted: #8b93a1;
+  --accent: #e6b450;
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  padding: 32px 16px;
+}
+
+main {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+header { margin-bottom: 32px; }
+
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: .01em;
+}
+
+.subtitle { color: var(--muted); }
+
+.list-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+h2 { font-size: 1.15rem; font-weight: 600; }
+
+.count { color: var(--muted); font-size: .9rem; }
+
+.characters {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.characters th,
+.characters td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.characters tbody tr:last-child td { border-bottom: none; }
+
+.characters th {
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--muted);
+}
+
+.characters .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.characters tbody tr:hover { background: #1d2127; }
+
+.name { font-weight: 600; }
+
+/* The character's class color is set per row via --class-color. */
+.class-name { color: var(--class-color, var(--fg)); font-weight: 600; }
+.name { color: var(--class-color, var(--fg)); }
+
+.role {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.role-pvp { color: #f07167; border-color: #5a2e2b; }
+.role-pve { color: #7cc6fe; border-color: #24435a; }
+
+.empty { color: var(--muted); text-align: center; }
+
+@media (max-width: 560px) {
+  .characters th,
+  .characters td { padding: 10px 8px; font-size: .9rem; }
+}
