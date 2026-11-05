@@ -608,29 +608,78 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .icon-list-names { display: inline-flex; flex-wrap: wrap; gap: 6px 14px; }
 
 /* Gear */
-.gear-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.gear-sheet {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 1fr) minmax(0, 1fr);
+  grid-template-areas: "left portrait right" "bottom bottom bottom";
+  gap: 12px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
+
+.gear-column { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; align-content: start; }
+.gear-left { grid-area: left; }
+.gear-right { grid-area: right; }
+.gear-bottom {
+  grid-area: bottom;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.gear-portrait {
+  grid-area: portrait;
+  position: relative;
+  min-height: 300px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: radial-gradient(closest-side, var(--badge-bg), transparent);
+}
+
+.gear-portrait-render { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.5); }
+.gear-portrait-class { position: absolute; top: 50%; left: 50%; width: 96px; height: 96px; transform: translate(-50%, -50%); border-radius: 50%; opacity: .55; }
 
 .gear-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--line);
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  padding: 8px 10px;
 }
 
-.gear-icon { flex: none; border-radius: 5px; border: 1px solid var(--line); background: var(--bg); }
+.gear-right .gear-item { flex-direction: row-reverse; text-align: right; }
+.gear-item.has-tooltip:hover { background: var(--badge-bg); }
+
+.gear-icon {
+  flex: none;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 2px solid currentColor;
+  background: var(--bg);
+}
+
+.gear-empty .gear-icon { border: 1px dashed var(--line); }
+.gear-empty .gear-meta { opacity: .7; }
 .gear-text { min-width: 0; }
 .gear-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gear-meta { color: var(--muted); font-size: .8rem; }
+.gear-meta { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .gear-sheet {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: "portrait portrait" "left right" "bottom bottom";
+    padding: 10px;
+  }
+  .gear-bottom { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gear-item .gear-name { white-space: normal; font-size: .85rem; }
+  .gear-item:not(.gear-empty) .gear-meta { display: none; }
+}
 .empty-note { color: var(--muted); }
 
 /* WoW item quality colors */
@@ -719,6 +768,9 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   pointer-events: none;
   transition: opacity .1s;
 }
+
+.gear-right .item-tooltip { left: auto; right: 0; text-align: left; }
+.gear-bottom .item-tooltip { top: auto; bottom: calc(100% + 6px); }
 
 .gear-item.has-tooltip:hover .item-tooltip,
 .gear-item.has-tooltip:focus .item-tooltip { opacity: 1; visibility: visible; }

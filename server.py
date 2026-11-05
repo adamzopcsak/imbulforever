@@ -39,7 +39,7 @@ MAX_TIP_LENGTH = 300
 FIRST_TIP = "Tudtad? Ha rákattintasz egy karakter nevére, megnézheted a gearjét."
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
-SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment", "refreshedAt")
+SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment", "render", "refreshedAt")
 # Old roleset values -> current ones.
 ROLE_MIGRATIONS = {"pve": "normal"}
 

@@ -63,6 +63,73 @@ function setItemIcon(img, url) {
   img.src = url;
 }
 
+// The slots as on an in-game character sheet: two columns beside the character, weapons below.
+const SHEET_SLOTS = {
+  left: ["HEAD", "NECK", "SHOULDER", "BACK", "CHEST", "SHIRT", "TABARD", "WRIST"],
+  right: ["HANDS", "WAIST", "LEGS", "FEET", "FINGER_1", "FINGER_2", "TRINKET_1", "TRINKET_2"],
+  bottom: ["MAIN_HAND", "OFF_HAND", "RANGED", "AMMO"],
+};
+// Names of the empty slots; filled ones show the name Blizzard sends. English like all game terms here.
+const SLOT_NAMES = {
+  HEAD: "Head", NECK: "Neck", SHOULDER: "Shoulder", BACK: "Back", CHEST: "Chest", SHIRT: "Shirt", TABARD: "Tabard",
+  WRIST: "Wrist", HANDS: "Hands", WAIST: "Waist", LEGS: "Legs", FEET: "Feet", FINGER_1: "Finger", FINGER_2: "Finger",
+  TRINKET_1: "Trinket", TRINKET_2: "Trinket", MAIN_HAND: "Main Hand", OFF_HAND: "Off Hand", RANGED: "Ranged", AMMO: "Ammo",
+};
+
+function gearSlot(slot, item) {
+  const li = el("li", "gear-item");
+  if (!item) {
+    li.classList.add("gear-empty");
+    li.append(el("span", "gear-icon"), el("div", "gear-text gear-meta", SLOT_NAMES[slot]));
+    return li;
+  }
+  const img = el("img", `gear-icon quality-${item.quality}`);
+  img.alt = "";
+  img.width = 40;
+  img.height = 40;
+  setItemIcon(img, item.icon);
+  const text = el("div", "gear-text");
+  text.append(el("div", `gear-name quality-${item.quality}`, item.name));
+  const meta = [item.slotName, item.type, item.itemLevel ? `ilvl ${item.itemLevel}` : ""].filter(Boolean).join(" · ");
+  text.append(el("div", "gear-meta", meta));
+  li.append(img, text);
+  if (item.tooltip) {
+    li.tabIndex = 0; // focus (tap on a phone) also shows the tooltip
+    li.classList.add("has-tooltip");
+    li.append(itemTooltip(item));
+  }
+  return li;
+}
+
+function renderSheet(character, items) {
+  const bySlot = Object.fromEntries(items.map((item) => [item.slot, item]));
+  const column = (name) => {
+    const list = el("ul", `gear-column gear-${name}`);
+    list.append(...SHEET_SLOTS[name].map((slot) => gearSlot(slot, bySlot[slot])));
+    return list;
+  };
+  // Blizzard has no picture for every character; the class icon stands in for those.
+  const portrait = el("div", "gear-portrait");
+  const showClassIcon = () => {
+    const img = el("img", "gear-portrait-class");
+    img.src = `/icons/class/${character.class}.jpg`;
+    img.alt = "";
+    portrait.replaceChildren(img);
+  };
+  if (character.render) {
+    const img = el("img", "gear-portrait-render");
+    img.src = character.render;
+    img.alt = `${character.name} ${character.surname}`;
+    img.addEventListener("error", showClassIcon);
+    portrait.append(img);
+  } else {
+    showClassIcon();
+  }
+  const sheet = el("div", "gear-sheet");
+  sheet.append(column("left"), portrait, column("right"), column("bottom"));
+  return sheet;
+}
+
 function renderGear(character) {
   const section = el("section", "gear");
   const head = el("div", "list-head");
@@ -85,27 +152,7 @@ function renderGear(character) {
     return section;
   }
 
-  const list = el("ul", "gear-list");
-  for (const item of items) {
-    const li = el("li", "gear-item");
-    const img = el("img", "gear-icon");
-    img.alt = "";
-    img.width = 36;
-    img.height = 36;
-    setItemIcon(img, item.icon);
-    const text = el("div", "gear-text");
-    text.append(el("div", `gear-name quality-${item.quality}`, item.name));
-    const meta = [item.slotName, item.type, item.itemLevel ? `ilvl ${item.itemLevel}` : ""].filter(Boolean).join(" · ");
-    text.append(el("div", "gear-meta", meta));
-    li.append(img, text);
-    if (item.tooltip) {
-      li.tabIndex = 0; // focus (tap on a phone) also shows the tooltip
-      li.classList.add("has-tooltip");
-      li.append(itemTooltip(item));
-    }
-    list.append(li);
-  }
-  section.append(list);
+  section.append(renderSheet(character, items));
   return section;
 }
 

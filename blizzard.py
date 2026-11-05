@@ -146,6 +146,16 @@ def equipment_from_response(response: dict) -> list:
     return sorted(items, key=lambda i: order.get(i["slot"], len(order)))
 
 
+def render_from_media(response: dict) -> str | None:
+    """URL of the full-body character picture (transparent PNG) from the character-media response.
+
+    Prefers "main-sd-raw": "main-raw" has more detail, but for some characters Blizzard renders it with black skin
+    and face (seen on Undead and Dwarf) or nearly empty.
+    """
+    assets = {asset.get("key"): asset.get("value") for asset in response.get("assets", [])}
+    return assets.get("main-sd-raw") or assets.get("main-raw")
+
+
 def css_color(color: dict | None) -> str | None:
     """Blizzard's {r, g, b, a} display color as a CSS hex color; None for plain white."""
     if not color:
@@ -276,6 +286,10 @@ class BlizzardSync:
                 for item in equipment:
                     item["icon"] = self.icons.get(self.client, item.pop("mediaId"), item.pop("mediaNamespace"))
                 fields["equipment"] = equipment
+            # The picture shows the worn gear, so it is refreshed together with it.
+            media = self.client.get(path + "/character-media")
+            if media is not None and render_from_media(media):
+                fields["render"] = render_from_media(media)
 
         last = self._professions_fetched.get(character["id"], 0)
         if time.time() - last >= self.professions_interval:
