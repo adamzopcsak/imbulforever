@@ -23,6 +23,34 @@ function iconWithName(src, name) {
   return span;
 }
 
+// Color of the average item level, in the WoW quality order white - green - blue - purple - orange.
+// There is no official scale, so this one follows Classic-era item levels:
+// - while levelling, gear is compared with the character's level: quest greens are a few item levels above
+//   their required level and dungeon blues a bit more, so the gap (ilvl - level) decides;
+// - at the level cap (60) fixed bands: dungeon blues are about ilvl 58-65, Molten Core (tier 1) starts at 66,
+//   tier 2 (Blackwing Lair) at 76.
+const MAX_LEVEL = 60;
+const ILVL_GRADES_LEVELLING = [ // [lowest gap, quality, text]
+  [15, "legendary", "Kiemelkedő: jóval a szintje fölötti felszerelés"],
+  [10, "epic", "Kiváló: bőven a szintje fölötti felszerelés"],
+  [5, "rare", "Jó: dungeon-szintű felszerelés"],
+  [0, "uncommon", "Rendben: a szintjének megfelelő felszerelés"],
+  [-Infinity, "common", "Lemaradt: a szintjénél gyengébb felszerelés"],
+];
+const ILVL_GRADES_MAX = [ // [lowest item level, quality, text]
+  [76, "legendary", "Kiemelkedő: tier 2 (Blackwing Lair) szint és fölötte"],
+  [66, "epic", "Raid szint: Molten Core (tier 1) felszerelés"],
+  [58, "rare", "Pre-raid: dungeon blue felszerelés"],
+  [50, "uncommon", "Kezdő 60-as: quest és dungeon green felszerelés"],
+  [-Infinity, "common", "Szintlépés közbeni felszerelés"],
+];
+
+function itemLevelGrade(average, level) {
+  const [grades, value] = level >= MAX_LEVEL ? [ILVL_GRADES_MAX, average] : [ILVL_GRADES_LEVELLING, average - level];
+  const [, quality, text] = grades.find(([lowest]) => value >= lowest);
+  return { quality, text };
+}
+
 // Blizzard's EU icon host misses some Forever icons (403) that its US host has,
 // so on an error try the US one; if that fails too, show an empty icon box.
 function setItemIcon(img, url) {
@@ -41,7 +69,14 @@ function renderGear(character) {
   head.append(el("h2", null, "Felszerelés"));
   const items = character.equipment || [];
   const average = averageItemLevel(items);
-  if (average) head.append(el("span", "count", `átlagos item level: ${average}`));
+  if (average) {
+    const grade = itemLevelGrade(average, character.level);
+    const value = el("span", `ilvl-value tooltip quality-${grade.quality}`, String(average));
+    value.dataset.tooltip = grade.text;
+    const label = el("span", "count", "átlagos item level: ");
+    label.append(value);
+    head.append(label);
+  }
   section.append(head);
 
   if (!character.blizzard || items.length === 0) {

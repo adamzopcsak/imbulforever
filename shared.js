@@ -176,7 +176,6 @@ function renderCharacterRow(character, gameData, renderActions) {
     factionName ? iconCell(`/icons/faction/${character.faction}.jpg`, factionName) : cell(""),
     iconCell(`/icons/class/${character.class}.jpg`, cls.name),
     cell(String(character.level), "num"),
-    cell(averageItemLevel(character.equipment || []) ?? "—", "num ilvl"),
     iconCell(`/icons/race/${character.race}_${gender}.jpg`, raceName),
     professionsCell(character.professions, gameData),
   );

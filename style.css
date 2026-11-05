@@ -152,7 +152,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .characters th,
 .characters td {
-  padding: 12px 6px;
+  padding: 12px 8px;
   text-align: left;
   border-bottom: 1px solid var(--line);
 }
@@ -740,5 +740,6 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .item-tooltip .coin-silver { color: #c7c7cf; }
 .item-tooltip .coin-copper { color: #d38a52; }
 
-/* ilvl column: the header stays lowercase, as in the game */
-.characters th.ilvl-head { text-transform: none; }
+
+/* Average item level on the character page, colored by grade (karakter.js itemLevelGrade) */
+.ilvl-value { font-weight: 700; font-size: 1rem; cursor: default; }
