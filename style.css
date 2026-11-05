@@ -744,7 +744,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 /* Average item level on the character page, colored by grade (karakter.js itemLevelGrade) */
 .ilvl-value { font-weight: 700; font-size: 1rem; cursor: default; }
 
-/* Page navigation in the header: "List oldal" and "Magyarítás" */
+/* Page navigation in the header: "Lista oldal" and "Magyarítás" */
 .site-header { flex-wrap: wrap; row-gap: 12px; }
 .site-nav { display: flex; gap: 4px; margin-left: 12px; }
 .nav-link {
