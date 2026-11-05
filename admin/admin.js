@@ -1,4 +1,4 @@
-// Admin page: add characters and see the current list.
+// Admin page: add and edit characters, and see the current list.
 
 function fillSelect(select, entries) {
   select.replaceChildren(
@@ -18,9 +18,16 @@ function setMessage(el, text, kind) {
 
 async function main() {
   const form = document.getElementById("character-form");
+  const formTitle = document.getElementById("form-title");
+  const submitButton = document.getElementById("submit-button");
+  const cancelButton = document.getElementById("cancel-button");
   const message = document.getElementById("form-message");
   const tbody = document.getElementById("character-rows");
   const count = document.getElementById("count");
+  const fields = form.elements;
+
+  // Id of the character being edited, or null when the form adds a new one.
+  let editingId = null;
 
   let gameData;
   try {
@@ -31,17 +38,71 @@ async function main() {
     return;
   }
 
-  fillSelect(form.elements.class, Object.entries(gameData.classes).map(([key, c]) => [key, c.name]));
-  fillSelect(form.elements.race, Object.entries(gameData.races));
-  fillSelect(form.elements.gender, Object.entries(gameData.genders));
-  fillSelect(form.elements.role, Object.entries(gameData.roles));
-  form.elements.level.max = gameData.maxLevel;
+  fillSelect(fields.class, Object.entries(gameData.classes).map(([key, c]) => [key, c.name]));
+  fillSelect(fields.race, Object.entries(gameData.races));
+  fillSelect(fields.gender, Object.entries(gameData.genders));
+  fillSelect(fields.role, Object.entries(gameData.roles));
+  fields.level.max = gameData.maxLevel;
 
-  await renderCharacterTable(tbody, count, gameData);
+  function highlightEditedRow() {
+    for (const row of tbody.rows) {
+      row.classList.toggle("editing", editingId !== null && row.dataset.id === editingId);
+    }
+  }
+
+  function startEditing(character) {
+    editingId = character.id;
+    fields.name.value = character.name;
+    fields.surname.value = character.surname;
+    fields.class.value = character.class;
+    fields.level.value = character.level;
+    fields.race.value = character.race;
+    fields.gender.value = character.gender || "male";
+    fields.role.value = character.role;
+    formTitle.textContent = `${character.name} ${character.surname} szerkesztése`;
+    submitButton.textContent = "Mentés";
+    cancelButton.hidden = false;
+    setMessage(message, "");
+    highlightEditedRow();
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    fields.name.focus({ preventScroll: true });
+  }
+
+  function stopEditing() {
+    editingId = null;
+    form.reset();
+    formTitle.textContent = "Új karakter";
+    submitButton.textContent = "Hozzáadás";
+    cancelButton.hidden = true;
+    highlightEditedRow();
+  }
+
+  function renderActions(character) {
+    const td = document.createElement("td");
+    td.className = "actions";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "edit-button";
+    button.textContent = "Szerkesztés";
+    button.addEventListener("click", () => startEditing(character));
+    td.append(button);
+    return td;
+  }
+
+  async function refreshTable() {
+    await renderCharacterTable(tbody, count, gameData, renderActions);
+    highlightEditedRow();
+  }
+
+  await refreshTable();
+
+  cancelButton.addEventListener("click", () => {
+    stopEditing();
+    setMessage(message, "");
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const fields = form.elements;
     const character = {
       name: fields.name.value.trim(),
       surname: fields.surname.value.trim(),
@@ -57,24 +118,24 @@ async function main() {
       return;
     }
 
-    const button = form.querySelector("button");
-    button.disabled = true;
+    const isEdit = editingId !== null;
+    submitButton.disabled = true;
     setMessage(message, "Mentés…");
     try {
-      await fetchJson("/admin/api/characters", {
-        method: "POST",
+      await fetchJson(isEdit ? `/admin/api/characters/${encodeURIComponent(editingId)}` : "/admin/api/characters", {
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(character),
       });
-      setMessage(message, `${character.name} ${character.surname} hozzáadva.`, "success");
-      fields.name.value = "";
-      fields.surname.value = "";
+      const fullName = `${character.name} ${character.surname}`;
+      setMessage(message, isEdit ? `${fullName} mentve.` : `${fullName} hozzáadva.`, "success");
+      stopEditing();
       fields.name.focus();
-      await renderCharacterTable(tbody, count, gameData);
+      await refreshTable();
     } catch (error) {
       setMessage(message, error.message || "Nem sikerült a mentés.", "error");
     } finally {
-      button.disabled = false;
+      submitButton.disabled = false;
     }
   });
 }

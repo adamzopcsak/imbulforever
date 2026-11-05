@@ -1,6 +1,6 @@
 # imbulforever.yagi.hu
 
-A page listing World of Warcraft: Forever characters, served at https://imbulforever.yagi.hu, with an admin page at `/admin/` for adding characters.
+A page listing World of Warcraft: Forever characters, served at https://imbulforever.yagi.hu, with an admin page at `/admin/` for adding and editing characters.
 
 ## How it works
 
@@ -10,6 +10,7 @@ A page listing World of Warcraft: Forever characters, served at https://imbulfor
 - **`server.py`:** a small API (Python standard library only):
   - `GET /api/characters`: the public list
   - `POST /admin/api/characters`: adds a character (validated; duplicate full names are rejected)
+  - `PUT /admin/api/characters/{id}`: updates a character (same validation)
 - **Data:** characters are stored in one JSON file (`/var/lib/imbulforever/characters.json` on the server). On first start it is seeded from `characters.json` in the repo; after that, deploys never overwrite it.
 - **Access control:** Caddy protects `/admin*` (the admin page and the write API) with basic auth. The API itself only listens on `127.0.0.1`.
 

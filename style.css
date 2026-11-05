@@ -253,3 +253,40 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   color: var(--accent);
   border-color: var(--accent);
 }
+
+/* Admin: edit mode and row actions */
+
+.form button.secondary {
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+
+.form button.secondary:hover { border-color: var(--muted); }
+
+.characters .actions { text-align: right; width: 1%; white-space: nowrap; }
+
+.edit-button {
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.edit-button:hover { color: var(--accent); border-color: var(--accent); }
+
+.characters tr.editing { background: #2a2414; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

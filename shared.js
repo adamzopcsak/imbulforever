@@ -46,11 +46,13 @@ function iconCell(src, name) {
   return td;
 }
 
-function renderCharacterRow(character, gameData) {
+// renderActions (optional) returns a <td> appended at the end of the row, e.g. admin buttons.
+function renderCharacterRow(character, gameData, renderActions) {
   const cls = gameData.classes[character.class] || { name: character.class, color: null };
   const raceName = gameData.races[character.race] || character.race;
   const gender = character.gender === "female" ? "female" : "male";
   const tr = document.createElement("tr");
+  tr.dataset.id = character.id;
   if (cls.color) tr.style.setProperty("--class-color", cls.color);
 
   tr.append(
@@ -67,25 +69,26 @@ function renderCharacterRow(character, gameData) {
   roleTd.append(role);
   tr.append(roleTd);
 
+  if (renderActions) tr.append(renderActions(character));
   return tr;
 }
 
 function showTableMessage(tbody, text) {
   const td = cell(text, "empty");
-  td.colSpan = 5;
+  td.colSpan = tbody.closest("table").tHead.rows[0].cells.length;
   const tr = document.createElement("tr");
   tr.append(td);
   tbody.replaceChildren(tr);
 }
 
 // Fills the character table and the count label; returns the loaded characters.
-async function renderCharacterTable(tbody, countEl, gameData) {
+async function renderCharacterTable(tbody, countEl, gameData, renderActions) {
   try {
     const characters = sortCharacters(await loadCharacters());
     if (characters.length === 0) {
       showTableMessage(tbody, "Még nincs karakter a listán.");
     } else {
-      tbody.replaceChildren(...characters.map((c) => renderCharacterRow(c, gameData)));
+      tbody.replaceChildren(...characters.map((c) => renderCharacterRow(c, gameData, renderActions)));
     }
     countEl.textContent = `${characters.length} karakter`;
     return characters;

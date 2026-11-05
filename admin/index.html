@@ -17,7 +17,7 @@
   </header>
 
   <section class="panel">
-    <h2>Új karakter</h2>
+    <h2 id="form-title">Új karakter</h2>
     <form id="character-form" class="form" novalidate>
       <label>
         <span>Név</span>
@@ -48,7 +48,8 @@
         <select name="role" required></select>
       </label>
       <div class="form-actions">
-        <button type="submit">Hozzáadás</button>
+        <button type="submit" id="submit-button">Hozzáadás</button>
+        <button type="button" id="cancel-button" class="secondary" hidden>Mégse</button>
         <p id="form-message" class="form-message" role="status"></p>
       </div>
     </form>
@@ -67,10 +68,11 @@
           <th class="num">Szint</th>
           <th>Faj</th>
           <th>Roleset</th>
+          <th><span class="visually-hidden">Műveletek</span></th>
         </tr>
       </thead>
       <tbody id="character-rows">
-        <tr><td colspan="5" class="empty">Betöltés…</td></tr>
+        <tr><td colspan="6" class="empty">Betöltés…</td></tr>
       </tbody>
     </table>
   </section>
