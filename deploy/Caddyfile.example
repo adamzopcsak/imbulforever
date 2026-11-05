@@ -1,0 +1,23 @@
+# Site block for /etc/caddy/Caddyfile (replaces the static-only block).
+# Create the password hash on the server with:  caddy hash-password
+# then put your user name and the hash in place of USER and HASH.
+
+imbulforever.yagi.hu {
+	encode gzip
+
+	# Only the owner may open the admin page and call the write API.
+	basic_auth /admin* {
+		USER HASH
+	}
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle /admin/api/* {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle {
+		root * /var/www/imbulforever.yagi.hu
+		file_server
+	}
+}

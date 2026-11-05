@@ -1,0 +1,18 @@
+# /etc/systemd/system/imbulforever.service — character API for imbulforever.yagi.hu
+[Unit]
+Description=Imbul Forever character API (imbulforever.yagi.hu)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/imbulforever/server.py --host 127.0.0.1 --port 8001 --data /var/lib/imbulforever/characters.json --seed /opt/imbulforever/characters.json
+# Runs as a throwaway user; only /var/lib/imbulforever is writable.
+DynamicUser=yes
+StateDirectory=imbulforever
+ProtectSystem=strict
+ProtectHome=yes
+NoNewPrivileges=yes
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

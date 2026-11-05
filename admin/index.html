@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Imbul Forever – admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <header class="admin-header">
+    <h1>Imbul Forever</h1>
+    <span class="badge">admin</span>
+    <a class="back" href="/">← Főoldal</a>
+  </header>
+
+  <section class="panel">
+    <h2>Új karakter</h2>
+    <form id="character-form" class="form" novalidate>
+      <label>
+        <span>Név</span>
+        <input name="name" required maxlength="24" autocomplete="off">
+      </label>
+      <label>
+        <span>Vezetéknév</span>
+        <input name="surname" required maxlength="24" autocomplete="off">
+      </label>
+      <label>
+        <span>Kaszt</span>
+        <select name="class" required></select>
+      </label>
+      <label>
+        <span>Szint</span>
+        <input name="level" type="number" min="1" max="60" value="1" required>
+      </label>
+      <label>
+        <span>Faj</span>
+        <select name="race" required></select>
+      </label>
+      <label>
+        <span>Szerep</span>
+        <select name="role" required></select>
+      </label>
+      <div class="form-actions">
+        <button type="submit">Hozzáadás</button>
+        <p id="form-message" class="form-message" role="status"></p>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <div class="list-head">
+      <h2>Karakterek</h2>
+      <span id="count" class="count"></span>
+    </div>
+    <table class="characters">
+      <thead>
+        <tr>
+          <th>Név</th>
+          <th>Kaszt</th>
+          <th class="num">Szint</th>
+          <th>Faj</th>
+          <th>Szerep</th>
+        </tr>
+      </thead>
+      <tbody id="character-rows">
+        <tr><td colspan="5" class="empty">Betöltés…</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<script src="/shared.js"></script>
+<script src="/admin/admin.js"></script>
+</body>
+</html>
