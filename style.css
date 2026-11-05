@@ -895,3 +895,46 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   font-size: .75rem;
   font-weight: 600;
 }
+/* New-version dialog */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  animation: modal-fade .15s ease-out;
+}
+
+.modal {
+  width: min(420px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.modal h2 { font-size: 1.2rem; margin-bottom: 10px; }
+.modal p { color: var(--fg); line-height: 1.5; }
+
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+.modal-actions button {
+  font: inherit;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+
+.modal-primary { color: var(--on-accent); background: var(--accent); border: none; }
+.modal-primary:hover { filter: brightness(1.08); }
+.modal-secondary { color: var(--fg); background: transparent; border: 1px solid var(--line); }
+.modal-secondary:hover { border-color: var(--muted); }
+
+@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .modal-backdrop { animation: none; } }
