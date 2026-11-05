@@ -119,7 +119,7 @@ function renderThemeControl() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "theme-toggle";
-    const label = () => (document.documentElement.dataset.theme === "light" ? "🌙 Sötét" : "☀️ Világos");
+    const label = () => (document.documentElement.dataset.theme === "light" ? `🌙 ${t("Sötét")}` : `☀️ ${t("Világos")}`);
     button.textContent = label();
     button.addEventListener("click", () => {
       setThemeMode(document.documentElement.dataset.theme === "light" ? "dark" : "light", null);
@@ -132,18 +132,18 @@ function renderThemeControl() {
   const group = document.createElement("div");
   group.className = "theme-switch";
   group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Megjelenés");
+  group.setAttribute("aria-label", t("Megjelenés"));
   const options = [[season.key, SEASONS[season.key]], ["dark", PLAIN_THEMES.dark], ["light", PLAIN_THEMES.light]];
   const current = currentThemeMode(season);
   for (const [mode, look] of options) {
     const button = document.createElement("button");
     button.type = "button";
-    button.title = `${look.label} téma`;
+    button.title = t("{name} téma", { name: t(look.label) });
     button.setAttribute("aria-pressed", String(mode === current));
     button.append(look.icon);
     const text = document.createElement("span");
     text.className = "theme-switch-label";
-    text.textContent = ` ${look.label}`;
+    text.textContent = ` ${t(look.label)}`;
     button.append(text);
     button.addEventListener("click", () => {
       setThemeMode(mode, season);
@@ -175,12 +175,14 @@ function addSnow() {
 
 document.addEventListener("DOMContentLoaded", () => {
   // Put the theme control in the header: before the "back"/admin link.
+  // The public pages also get the language switch, to its left.
   const header = document.querySelector(".site-header, .admin-header");
   if (header) {
     const anchor = header.querySelector(".back, .admin-button");
     const control = renderThemeControl();
     if (anchor) anchor.before(control);
     else header.append(control);
+    if (header.matches(".site-header")) control.before(renderLanguageControl());
   }
   if (ACTIVE_SEASON && ACTIVE_SEASON.key === "christmas") addSnow();
 });

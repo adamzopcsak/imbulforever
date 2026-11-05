@@ -66,13 +66,13 @@ function setItemIcon(img, url) {
 function renderGear(character) {
   const section = el("section", "gear");
   const head = el("div", "list-head");
-  head.append(el("h2", null, "Felszerelés"));
+  head.append(el("h2", null, t("Felszerelés")));
   const items = character.equipment || [];
   const average = averageItemLevel(items);
   if (average) {
     const grade = itemLevelGrade(average, character.level);
     const value = el("span", `ilvl-value tooltip quality-${grade.quality}`, String(average));
-    value.dataset.tooltip = grade.text;
+    value.dataset.tooltip = t(grade.text);
     const label = el("span", "count", "item level: ");
     label.append(value);
     head.append(label);
@@ -81,7 +81,7 @@ function renderGear(character) {
 
   if (!character.blizzard || items.length === 0) {
     section.append(el("p", "empty-note",
-      "A felszerelés csak a Blizzard által ismert karaktereknél látszik: legalább 10-es szint, és a karakter azóta kilépett a játékból."));
+      t("A felszerelés csak a Blizzard által ismert karaktereknél látszik: legalább 10-es szint, és a karakter azóta kilépett a játékból.")));
     return section;
   }
 
@@ -165,24 +165,24 @@ function renderCharacter(container, character, gameData) {
   card.append(title);
 
   const details = el("dl", "details");
-  details.append(detail("Kié", character.owner || "—"));
+  details.append(detail(t("Kié"), character.owner || "—"));
   const factionName = gameData.factions[character.faction];
-  details.append(detail("Frakció", factionName ? iconWithName(`/icons/faction/${character.faction}.jpg`, factionName) : "—"));
-  details.append(detail("Kaszt", iconWithName(`/icons/class/${character.class}.jpg`, cls.name)));
-  details.append(detail("Szint", String(character.level)));
-  details.append(detail("Faj", iconWithName(`/icons/race/${character.race}_${gender}.jpg`, raceName)));
+  details.append(detail(t("Frakció"), factionName ? iconWithName(`/icons/faction/${character.faction}.jpg`, factionName) : "—"));
+  details.append(detail(t("Kaszt"), iconWithName(`/icons/class/${character.class}.jpg`, cls.name)));
+  details.append(detail(t("Szint"), String(character.level)));
+  details.append(detail(t("Faj"), iconWithName(`/icons/race/${character.race}_${gender}.jpg`, raceName)));
 
   const professions = (character.professions || []).filter((key) => gameData.professions[key]);
   const professionList = el("span", "icon-list-names");
   for (const key of professions) {
     professionList.append(iconWithName(`/icons/profession/${key}.jpg`, gameData.professions[key].name));
   }
-  details.append(detail("Szakmák", professions.length ? professionList : "—"));
+  details.append(detail(t("Szakmák"), professions.length ? professionList : "—"));
 
-  details.append(detail("Játékmód", character.role ? (gameData.roles[character.role] || character.role) : "—"));
+  details.append(detail(t("Játékmód"), character.role ? (gameData.roles[character.role] || character.role) : "—"));
   const refreshed = lastRefresh(character);
-  details.append(detail("Utoljára frissült", refreshed ? relativeTime(refreshed) : "—"));
-  details.append(detail("Utolsó belépés", character.lastLogin ? relativeTime(character.lastLogin) : "—"));
+  details.append(detail(t("Utoljára frissült"), refreshed ? relativeTime(refreshed) : "—"));
+  details.append(detail(t("Utolsó belépés"), character.lastLogin ? relativeTime(character.lastLogin) : "—"));
   card.append(details);
 
   container.replaceChildren(card, renderGear(character));
@@ -197,7 +197,7 @@ async function main() {
       const [gameData, characters] = await Promise.all([loadGameData(), loadCharacters()]);
       const character = characters.find((c) => c.id === id);
       if (!character) {
-        container.replaceChildren(el("p", "empty", "Ez a karakter nincs a listán."));
+        container.replaceChildren(el("p", "empty", t("Ez a karakter nincs a listán.")));
         return;
       }
       // Don't redraw under an open item tooltip; the next refresh catches up.
@@ -205,7 +205,7 @@ async function main() {
       renderCharacter(container, character, gameData);
     } catch (error) {
       console.error("Failed to load the character", error);
-      if (!keepOnError) container.replaceChildren(el("p", "empty", "Nem sikerült betölteni a karaktert."));
+      if (!keepOnError) container.replaceChildren(el("p", "empty", t("Nem sikerült betölteni a karaktert.")));
     }
   }
 

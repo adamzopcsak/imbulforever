@@ -647,6 +647,8 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .admin-header .theme-control { margin-left: auto; }
 .admin-header .theme-control + .back { margin-left: 4px; }
 .site-header { justify-content: flex-start; }
+.site-header .language-control { margin-left: auto; }
+.site-header .language-control + .theme-control { margin-left: 0; }
 
 .theme-toggle,
 .theme-switch button {
