@@ -21,6 +21,7 @@ A page listing World of Warcraft: Forever characters, served at https://imbulfor
   - `DELETE /admin/api/characters/{id}`: deletes a character
 - **Data:** characters are stored in one JSON file (`/var/lib/imbulforever/characters.json` on the server). On first start it is seeded from `characters.json` in the repo; after that, deploys never overwrite it.
 - **Sorting:** highest level first; within a level, whoever reached it first (`levelReachedAt`, recorded when the level changes through the admin page or the Blizzard sync; characters without it count as earliest), then by name.
+- **Themes (`themes.js`):** dark is the default, light is a button in the header; the choice is kept in `localStorage`. Seasonal themes (`SEASONS`; now Christmas, December 15–30) are the default in their season, with a three-way switch; leaving one is remembered for that season of that year only. The admin page lists the seasonal themes and when they are on. `?tema=christmas` turns a seasonal theme on in the browser tab for trying it out, `?tema=off` ends that.
 - **Access control:** Caddy protects `/admin*` (the admin page and the write API) with basic auth. The API itself only listens on `127.0.0.1`.
 
 ## Local preview
