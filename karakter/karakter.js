@@ -31,6 +31,18 @@ function averageItemLevel(items) {
   return levels.length ? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length) : null;
 }
 
+// Blizzard's EU icon host misses some Forever icons (403) that its US host has,
+// so on an error try the US one; if that fails too, show an empty icon box.
+function setItemIcon(img, url) {
+  if (!url) return;
+  img.addEventListener("error", () => {
+    const fallback = img.src.replace("/forever-eu/", "/forever-us/");
+    if (fallback !== img.src) img.src = fallback;
+    else img.removeAttribute("src");
+  });
+  img.src = url;
+}
+
 function renderGear(character) {
   const section = el("section", "gear");
   const head = el("div", "list-head");
@@ -53,7 +65,7 @@ function renderGear(character) {
     img.alt = "";
     img.width = 36;
     img.height = 36;
-    if (item.icon) img.src = item.icon;
+    setItemIcon(img, item.icon);
     const text = el("div", "gear-text");
     text.append(el("div", `gear-name quality-${item.quality}`, item.name));
     const meta = [item.slotName, item.type, item.itemLevel ? `ilvl ${item.itemLevel}` : ""].filter(Boolean).join(" · ");
