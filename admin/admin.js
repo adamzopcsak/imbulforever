@@ -80,6 +80,7 @@ async function main() {
     editingId = character.id;
     fields.name.value = character.name;
     fields.surname.value = character.surname;
+    fields.owner.value = character.owner || "";
     fields.class.value = character.class;
     fields.level.value = character.level;
     fields.race.value = character.race;
@@ -135,6 +136,7 @@ async function main() {
     const character = {
       name: fields.name.value.trim(),
       surname: fields.surname.value.trim(),
+      owner: fields.owner.value.trim(),
       class: fields.class.value,
       level: Number(fields.level.value),
       race: fields.race.value,
