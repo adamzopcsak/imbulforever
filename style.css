@@ -1,3 +1,5 @@
+/* Dark is the default theme; light and the seasonal themes (themes.js sets data-theme / data-season on <html>)
+   override these variables below. */
 :root {
   color-scheme: dark; /* dark scrollbars and form controls */
   --bg: #0f1114;
@@ -6,6 +8,102 @@
   --fg: #e9ecf1;
   --muted: #8b93a1;
   --accent: #e6b450;
+  --on-accent: #1a1408;
+  --row-hover: #1d2127;
+  --row-editing: #2a2414;
+  --badge-bg: #3a2f17;
+  --tooltip-bg: #000;
+  --success: #7bd88f;
+  --danger: #f07167;
+  --role-pvp: #f07167;      --role-pvp-line: #5a2e2b;
+  --role-normal: #7cc6fe;   --role-normal-line: #24435a;
+  --role-rp: #c9a0ff;       --role-rp-line: #3d2f57;
+  --role-rp-pvp: #f5a65b;   --role-rp-pvp-line: #5a3b1f;
+  --q-poor: #9d9d9d;
+  --q-common: #ffffff;
+  --q-uncommon: #1eff00;
+  --q-rare: #0070dd;
+  --q-epic: #a335ee;
+  --q-legendary: #ff8000;
+  --q-artifact: #e6cc80;
+  /* Class colors are made for dark backgrounds: the light theme darkens them with this */
+  --class-shade: 0%;
+}
+
+/* Light theme */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --line: #e3e1da;
+  --fg: #1f1e1b;
+  --muted: #6b6a64;
+  --accent: #a8741a;
+  --on-accent: #ffffff;
+  --row-hover: #f1efe8;
+  --row-editing: #fbf1dc;
+  --badge-bg: #f6ead0;
+  --tooltip-bg: #1f1e1b;
+  --success: #2f7d32;
+  --danger: #b3261e;
+  --role-pvp: #b3261e;      --role-pvp-line: #efc4c0;
+  --role-normal: #1f5f99;   --role-normal-line: #bcd6ee;
+  --role-rp: #6b3fb8;       --role-rp-line: #d8c8f2;
+  --role-rp-pvp: #a85a12;   --role-rp-pvp-line: #f0d2b3;
+  --q-poor: #7a7a7a;
+  --q-common: #1f1e1b;
+  --q-uncommon: #1a8a00;
+  --q-rare: #0062c4;
+  --q-epic: #8a2bd0;
+  --q-legendary: #c25e00;
+  --q-artifact: #9a7b2c;
+  --class-shade: 35%;
+}
+/* The tooltip text stays light on its dark box */
+:root[data-theme="light"] .icon::after,
+:root[data-theme="light"] .tooltip::after,
+:root[data-theme="light"] .info-text { color: #f6f5f1; }
+
+/* Christmas theme (the default from December 15 to 30): deep pine green with cranberry red and candle gold,
+   and a little snow; kept calm on purpose */
+:root[data-season="christmas"][data-theme="dark"] {
+  --bg: #0b1a13;
+  --panel: #11241a;
+  --line: #22402f;
+  --fg: #f1f3ec;
+  --muted: #9cb0a3;
+  --accent: #e9c062;
+  --row-hover: #163021;
+  --row-editing: #2c2a14;
+  --badge-bg: #4a1c20;
+  --tooltip-bg: #06110c;
+}
+:root[data-season="christmas"] h1 { color: #ec5f63; }
+
+/* Snow: flakes made by themes.js, falling slowly behind the content; none with reduced motion */
+.snow { display: none; }
+:root[data-season="christmas"] .snow {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.snow i {
+  position: absolute;
+  top: -12px;
+  border-radius: 50%;
+  background: #fff;
+  animation: snow-fall linear infinite;
+}
+@keyframes snow-fall {
+  25% { transform: translate(var(--sway), 27.5vh); }
+  75% { transform: translate(calc(var(--sway) * -1), 82.5vh); }
+  to { transform: translate(0, calc(100vh + 24px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-season="christmas"] .snow { display: none; }
 }
 
 * { box-sizing: border-box; margin: 0; }
@@ -83,12 +181,12 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   font-variant-numeric: tabular-nums;
 }
 
-.characters tbody tr:hover { background: #1d2127; }
+.characters tbody tr:hover { background: var(--row-hover); }
 
 .name { font-weight: 600; white-space: nowrap; }
 
 /* The character's class color is set per row via --class-color. */
-.name { color: var(--class-color, var(--fg)); }
+.name { color: color-mix(in srgb, var(--class-color, var(--fg)), #000 var(--class-shade)); }
 
 .role {
   display: inline-block;
@@ -101,7 +199,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   letter-spacing: .04em;
 }
 
-.role-pvp { color: #f07167; border-color: #5a2e2b; }
+.role-pvp { color: var(--role-pvp); border-color: var(--role-pvp-line); }
 
 .empty { color: var(--muted); text-align: center; }
 
@@ -122,7 +220,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .badge {
   padding: 2px 10px;
   border-radius: 999px;
-  background: #3a2f17;
+  background: var(--badge-bg);
   color: var(--accent);
   font-size: .8rem;
   font-weight: 700;
@@ -189,7 +287,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .form button {
   font: inherit;
   font-weight: 700;
-  color: #1a1408;
+  color: var(--on-accent);
   background: var(--accent);
   border: none;
   border-radius: 6px;
@@ -200,8 +298,8 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .form button:disabled { opacity: .6; cursor: default; }
 
 .form-message { color: var(--muted); }
-.form-message.success { color: #7bd88f; }
-.form-message.error { color: #f07167; }
+.form-message.success { color: var(--success); }
+.form-message.error { color: var(--danger); }
 
 /* Class and race icons with a tooltip showing the English name */
 
@@ -227,7 +325,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   transform: translateX(-50%);
   padding: 3px 8px;
   border-radius: 5px;
-  background: #000;
+  background: var(--tooltip-bg);
   border: 1px solid var(--line);
   color: var(--fg);
   font-size: .8rem;
@@ -292,7 +390,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .edit-button:hover { color: var(--accent); border-color: var(--accent); }
 
-.characters tr.editing { background: #2a2414; }
+.characters tr.editing { background: var(--row-editing); }
 
 .visually-hidden {
   position: absolute;
@@ -373,7 +471,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 /* Admin: delete button next to the edit button */
 .actions .edit-button + .edit-button { margin-left: 6px; }
-.delete-button:hover { color: #f07167; border-color: #f07167; }
+.delete-button:hover { color: var(--danger); border-color: var(--danger); }
 
 /* Footer with version and release time */
 .site-footer {
@@ -390,9 +488,9 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .table-wrap { position: relative; overflow-x: auto; }
 
 /* Rulesets (Blizzard names) */
-.role-normal { color: #7cc6fe; border-color: #24435a; }
-.role-roleplay { color: #c9a0ff; border-color: #3d2f57; }
-.role-roleplay-pvp { color: #f5a65b; border-color: #5a3b1f; }
+.role-normal { color: var(--role-normal); border-color: var(--role-normal-line); }
+.role-roleplay { color: var(--role-rp); border-color: var(--role-rp-line); }
+.role-roleplay-pvp { color: var(--role-rp-pvp); border-color: var(--role-rp-pvp-line); }
 
 /* Last login column */
 .last-login { color: var(--muted); font-size: .9rem; white-space: nowrap; }
@@ -443,7 +541,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
   width: min(300px, 80vw);
   padding: 8px 10px;
   border-radius: 6px;
-  background: #000;
+  background: var(--tooltip-bg);
   border: 1px solid var(--line);
   color: var(--fg);
   font-size: .8rem;
@@ -482,7 +580,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 }
 
 .character-title { margin-bottom: 16px; }
-.character-title .name { font-size: 1.5rem; font-weight: 700; color: var(--class-color, var(--fg)); }
+.character-title .name { font-size: 1.5rem; font-weight: 700; color: color-mix(in srgb, var(--class-color, var(--fg)), #000 var(--class-shade)); }
 .character-title .guild { font-size: .95rem; }
 
 .details {
@@ -533,10 +631,61 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 .empty-note { color: var(--muted); }
 
 /* WoW item quality colors */
-.quality-poor { color: #9d9d9d; }
-.quality-common { color: #ffffff; }
-.quality-uncommon { color: #1eff00; }
-.quality-rare { color: #0070dd; }
-.quality-epic { color: #a335ee; }
-.quality-legendary { color: #ff8000; }
-.quality-artifact, .quality-heirloom { color: #e6cc80; }
+.quality-poor { color: var(--q-poor); }
+.quality-common { color: var(--q-common); }
+.quality-uncommon { color: var(--q-uncommon); }
+.quality-rare { color: var(--q-rare); }
+.quality-epic { color: var(--q-epic); }
+.quality-legendary { color: var(--q-legendary); }
+.quality-artifact, .quality-heirloom { color: var(--q-artifact); }
+
+/* Theme control in the header: a dark/light button, or in a season a three-way switch */
+.site-header .theme-control,
+.admin-header .theme-control { margin-left: auto; }
+.admin-header .theme-control + .back { margin-left: 4px; }
+.site-header { justify-content: flex-start; }
+
+.theme-toggle,
+.theme-switch button {
+  font: inherit;
+  font-size: .85rem;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.theme-toggle {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+.theme-toggle:hover,
+.theme-switch button:hover { color: var(--fg); }
+
+.theme-switch {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.theme-switch button { border: 0; padding: 6px 10px; }
+.theme-switch button + button { border-left: 1px solid var(--line); }
+.theme-switch button[aria-pressed="true"] { background: var(--badge-bg); color: var(--fg); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .theme-switch-label { display: none; }
+}
+
+/* Admin: seasonal themes table */
+.themes-table { width: 100%; border-collapse: collapse; }
+.themes-table th,
+.themes-table td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+.themes-table th { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.themes-table tr:last-child td { border-bottom: none; }
+.themes-table .muted { color: var(--muted); }
+.theme-status { color: var(--muted); font-size: .85rem; }
+.theme-status.on { color: var(--success); font-weight: 600; }
+.panel-note { color: var(--muted); font-size: .9rem; margin: -8px 0 12px; }
+.seasons-panel { margin-top: 32px; }

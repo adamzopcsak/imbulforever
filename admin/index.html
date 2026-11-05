@@ -7,6 +7,7 @@
 <title>Imbul Forever – admin</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/style.css">
+<script src="/themes.js"></script>
 </head>
 <body>
 <main>
@@ -99,9 +100,19 @@
       </table>
     </div>
   </section>
+
+  <section class="panel seasons-panel">
+    <h2>Témák</h2>
+    <p class="panel-note">Az ünnepi témák, és hogy mettől meddig aktívak. Az időszakon belül az ünnepi téma az alapértelmezett mindenkinek, a fejlécben át lehet váltani Sötétre vagy Világosra, és ezt a böngésző megjegyzi arra az évre. Az időszakon kívül a Sötét (alapértelmezett) és a Világos téma közül lehet választani. Kipróbálni bármikor lehet: <code>?tema=christmas</code> a cím végén (kikapcsolás: <code>?tema=off</code>).</p>
+    <table class="themes-table">
+      <thead><tr><th>Téma</th><th>Mikor</th><th>Idén / következő</th></tr></thead>
+      <tbody id="season-rows"></tbody>
+    </table>
+  </section>
 </main>
 <footer class="site-footer" id="site-footer" hidden></footer>
 <script src="/shared.js"></script>
 <script src="/admin/admin.js"></script>
+<script src="/admin/seasons.js"></script>
 </body>
 </html>
