@@ -71,6 +71,18 @@ function sortCharacters(characters) {
     || a.name.localeCompare(b.name, "hu"));
 }
 
+// Character name, with the guild below it as "<Guild>" if the Blizzard API reports one.
+function nameCell(character) {
+  const td = cell(`${character.name} ${character.surname}`, "name");
+  if (character.guild) {
+    const guild = document.createElement("div");
+    guild.className = "guild";
+    guild.textContent = `<${character.guild}>`;
+    td.append(guild);
+  }
+  return td;
+}
+
 function cell(text, className) {
   const td = document.createElement("td");
   td.textContent = text;
@@ -141,7 +153,7 @@ function renderCharacterRow(character, gameData, renderActions) {
 
   const factionName = gameData.factions[character.faction];
   tr.append(
-    cell(`${character.name} ${character.surname}`, "name"),
+    nameCell(character),
     cell(character.owner || "", "owner"),
     factionName ? iconCell(`/icons/faction/${character.faction}.jpg`, factionName) : cell(""),
     iconCell(`/icons/class/${character.class}.jpg`, cls.name),

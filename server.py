@@ -35,7 +35,7 @@ MAX_NAME_LENGTH = 24
 MAX_OWNER_LENGTH = 40
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
-SYNC_ONLY_FIELDS = ("lastLogin", "blizzard")
+SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild")
 # Old roleset values -> current ones.
 ROLE_MIGRATIONS = {"pve": "normal"}
 
