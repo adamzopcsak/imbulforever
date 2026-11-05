@@ -456,3 +456,11 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .info:hover .info-text,
 .info:focus .info-text { opacity: 1; }
+
+/* Guild name under the character name */
+.guild {
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 400;
+  line-height: 1.3;
+}

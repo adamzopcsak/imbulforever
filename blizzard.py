@@ -83,6 +83,9 @@ def fields_from_profile(profile: dict, game_data: dict) -> dict:
     """Map a Blizzard character profile to our character fields; unknown values are left out."""
     fields = {"lastLogin": iso_from_millis(profile["last_login_timestamp"])} if profile.get("last_login_timestamp") else {}
 
+    # Always set, so leaving a guild clears it.
+    fields["guild"] = (profile.get("guild") or {}).get("name", "")
+
     level = profile.get("level")
     if isinstance(level, int) and 1 <= level <= game_data["maxLevel"]:
         fields["level"] = level
