@@ -41,6 +41,7 @@ async function main() {
   fillSelect(fields.class, Object.entries(gameData.classes).map(([key, c]) => [key, c.name]));
   fillSelect(fields.race, Object.entries(gameData.races));
   fillSelect(fields.gender, Object.entries(gameData.genders));
+  fillSelect(fields.faction, Object.entries(gameData.factions));
   fillSelect(fields.role, Object.entries(gameData.roles));
   fields.level.max = gameData.maxLevel;
 
@@ -83,6 +84,7 @@ async function main() {
     fields.level.value = character.level;
     fields.race.value = character.race;
     fields.gender.value = character.gender || "male";
+    fields.faction.value = character.faction || "alliance";
     fields.role.value = character.role;
     const professions = character.professions || [];
     for (const box of professionBoxes) box.checked = professions.includes(box.value);
@@ -137,6 +139,7 @@ async function main() {
       level: Number(fields.level.value),
       race: fields.race.value,
       gender: fields.gender.value,
+      faction: fields.faction.value,
       role: fields.role.value,
       professions: professionBoxes.filter((b) => b.checked).map((b) => b.value),
     };

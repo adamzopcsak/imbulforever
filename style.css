@@ -75,7 +75,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .characters tbody tr:hover { background: #1d2127; }
 
-.name { font-weight: 600; }
+.name { font-weight: 600; white-space: nowrap; }
 
 /* The character's class color is set per row via --class-color. */
 .name { color: var(--class-color, var(--fg)); }

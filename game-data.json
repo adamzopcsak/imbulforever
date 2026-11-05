@@ -21,6 +21,10 @@
     "troll": "Troll",
     "skyborne": "Skyborne"
   },
+  "factions": {
+    "alliance": "Alliance",
+    "horde": "Horde"
+  },
   "genders": {
     "male": "Férfi",
     "female": "Nő"

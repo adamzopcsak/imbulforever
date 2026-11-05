@@ -133,6 +133,7 @@ def validate_character(data: object) -> dict:
         "role": choice("role", "szerep", GAME_DATA["roles"]),
         "race": choice("race", "faj", GAME_DATA["races"]),
         "gender": choice("gender", "nem", GAME_DATA["genders"]),
+        "faction": choice("faction", "frakció", GAME_DATA["factions"]),
         "professions": professions,
     }
 

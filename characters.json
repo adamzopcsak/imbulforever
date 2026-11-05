@@ -6,6 +6,7 @@
     "level": 6,
     "role": "pvp",
     "race": "skyborne",
-    "gender": "female"
+    "gender": "female",
+    "faction": "alliance"
   }
 ]
