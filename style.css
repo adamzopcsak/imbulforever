@@ -228,3 +228,28 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 }
 
 .icon:hover::after { opacity: 1; }
+
+/* Homepage header with the admin button */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-button {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .1s, border-color .1s;
+}
+
+.admin-button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
