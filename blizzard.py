@@ -149,7 +149,8 @@ def equipment_from_response(response: dict) -> list:
 def render_from_media(response: dict) -> str | None:
     """URL of the full-body character picture (transparent PNG) from the character-media response.
 
-    Prefers "main-sd-raw": in "main-raw" Blizzard currently renders the skin and face of Forever characters black.
+    Prefers "main-sd-raw": "main-raw" has more detail, but for some characters Blizzard renders it with black skin
+    and face (seen on Undead and Dwarf) or nearly empty.
     """
     assets = {asset.get("key"): asset.get("value") for asset in response.get("assets", [])}
     return assets.get("main-sd-raw") or assets.get("main-raw")
