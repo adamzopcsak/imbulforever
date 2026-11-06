@@ -85,6 +85,9 @@ const ENGLISH = {
   "Talentek": "Talents",
   "Elköltött: {spent} · El nem költött: {unspent}": "Spent: {spent} · Unspent: {unspent}",
   "Hírnév": "Reputation",
+  "Mountok": "Mounts",
+  "Még nincs mountja.": "No mounts yet.",
+  "Ezzel a karakterrel nem használható.": "This character can't use it.",
   "A felszerelés csak a Blizzard által ismert karaktereknél látszik: legalább 10-es szint, és a karakter azóta kilépett a játékból.":
     "Gear is only shown for characters Blizzard knows about: level 10 or higher, and logged out of the game since the API launched.",
   "Ez a karakter nincs a listán.": "This character is not on the list.",
