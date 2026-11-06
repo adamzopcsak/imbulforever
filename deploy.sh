@@ -18,7 +18,7 @@ VERSION=$(tr -d '[:space:]' < VERSION)
 printf '{"version": "%s", "released": "%s"}\n' "$VERSION" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > version.json
 
 ssh -i "$KEY" "$HOST" "mkdir -p $WEB/admin $WEB/karakter $WEB/magyaritas $APP"
-scp -i "$KEY" index.html style.css i18n.js themes.js shared.js app.js game-data.json favicon.svg version.json "$HOST:$WEB/"
+scp -i "$KEY" index.html style.css i18n.js themes.js shared.js app.js game-data.json talent-trees.json favicon.svg version.json "$HOST:$WEB/"
 scp -i "$KEY" admin/index.html admin/admin.js admin/seasons.js admin/tips.js "$HOST:$WEB/admin/"
 scp -i "$KEY" karakter/index.html karakter/karakter.js "$HOST:$WEB/karakter/"
 scp -i "$KEY" magyaritas/index.html "$HOST:$WEB/magyaritas/"

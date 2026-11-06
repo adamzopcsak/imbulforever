@@ -1,4 +1,4 @@
-// Character page: everything from the list plus the equipped gear (from the Blizzard API).
+// Character page: everything from the list plus the gear, stats, talents and reputations (from the Blizzard API).
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -156,6 +156,255 @@ function renderGear(character) {
   return section;
 }
 
+// Round to at most two decimals, without trailing zeros.
+const number = (value) => String(Math.round(value * 100) / 100);
+const percent = (value) => `${value.toFixed(2)}%`;
+
+// A section in the in-game look, its title and the panels under it.
+function ingameSection(title, note) {
+  const section = el("section", "ingame-section");
+  const head = el("div", "list-head");
+  head.append(el("h2", null, title));
+  if (note) head.append(el("span", "count", note));
+  section.append(head);
+  return section;
+}
+
+// A "Strength   52" line of the character sheet. Like in the game, a value above its base is green, below it red.
+function statLine(label, value, base) {
+  const row = el("div", "stat-line");
+  row.append(el("span", "stat-label", label));
+  const shown = el("span", "stat-value", typeof value === "number" ? number(value) : value);
+  if (typeof base === "number" && typeof value === "number" && base !== value) {
+    shown.classList.add(value > base ? "stat-up" : "stat-down");
+    shown.title = `${number(base)} ${value > base ? "+" : "-"} ${number(Math.abs(value - base))}`;
+  }
+  row.append(shown);
+  return row;
+}
+
+function statPanel(title, lines) {
+  const panel = el("div", "ingame-panel stat-panel");
+  panel.append(el("h3", null, title), ...lines);
+  return panel;
+}
+
+function weaponLines(hand, label) {
+  return [
+    statLine(`${label} Damage`, `${Math.round(hand.damage_min)} - ${Math.round(hand.damage_max)}`),
+    statLine(`${label} Speed`, hand.speed.toFixed(2)),
+    statLine(`${label} DPS`, hand.dps.toFixed(1)),
+  ];
+}
+
+// Health and power like the bars on the unit frame.
+function statBar(label, value, kind) {
+  const bar = el("div", `stat-bar stat-bar-${kind}`);
+  bar.append(el("span", null, `${label}: ${number(value)}`));
+  return bar;
+}
+
+function renderStats(character) {
+  const stats = character.stats;
+  if (!stats) return null;
+  const section = ingameSection(t("Statok"));
+  const bars = el("div", "stat-bars");
+  bars.append(statBar("Health", stats.health, "health"));
+  if (stats.powerType) bars.append(statBar(stats.powerType, stats.power, stats.powerType.toLowerCase()));
+  section.append(bars);
+
+  // Without a weapon in the off hand the API still sends bare-hand numbers, so those stay hidden.
+  const offHandItem = (character.equipment || []).find((item) => item.slot === "OFF_HAND");
+  const melee = [...weaponLines(stats.mainHand, "Main Hand")];
+  if (offHandItem?.tooltip?.damage) melee.push(...weaponLines(stats.offHand, "Off Hand"));
+  melee.push(statLine("Attack Power", stats.attackPower), statLine("Crit Chance", percent(stats.meleeCrit)));
+  const spell = [statLine("Spell Power", stats.spellPower), statLine("Crit Chance", percent(stats.spellCrit))];
+  if (stats.powerType === "Mana") {
+    spell.push(statLine("Mana Regen", number(stats.manaRegen)), statLine("Regen in Combat", number(stats.manaRegenCombat)));
+  }
+
+  const panels = el("div", "stat-panels");
+  panels.append(
+    statPanel("Base Stats", ["strength", "agility", "stamina", "intellect", "spirit"].map((key) =>
+      statLine(key[0].toUpperCase() + key.slice(1), stats[key].effective, stats[key].base))),
+    statPanel("Melee", melee),
+    statPanel("Ranged", [statLine("Crit Chance", percent(stats.rangedCrit))]),
+    statPanel("Spell", spell),
+    statPanel("Defense", [
+      statLine("Armor", stats.armor.effective, stats.armor.base),
+      statLine("Dodge", percent(stats.dodge)),
+      statLine("Parry", percent(stats.parry)),
+      statLine("Block", percent(stats.block)),
+    ]),
+    statPanel("Resistances", Object.entries(stats.resistances).map(([school, value]) =>
+      statLine(school[0].toUpperCase() + school.slice(1), value.effective, value.base))),
+  );
+  section.append(panels);
+  return section;
+}
+
+// The talent grid, as in the game: rows open every 5 points spent in the tree.
+const TALENT_COLUMNS = 4;
+const TALENT_ROWS = 7;
+const TALENT_POINTS_PER_ROW = 5;
+const TALENT_CELL = 44; // keep in sync with --talent-cell in style.css
+const TALENT_GAP = 12; // keep in sync with --talent-gap in style.css
+
+// The character gets the first talent point at level 10, then one on every level.
+function talentPoints(level) {
+  return Math.max(0, level - 9);
+}
+
+function talentTooltip(talent, rank, tree, state) {
+  const box = el("div", "item-tooltip");
+  box.setAttribute("role", "tooltip");
+  box.append(el("div", "tt-name", talent.name));
+  box.append(el("div", null, `Rank ${rank}/${talent.ranks.length}`));
+  if (talent.castTime) box.append(el("div", null, talent.castTime));
+  if (rank < talent.ranks.length && state.rowLocked) {
+    box.append(el("div", "tt-red", `Requires ${talent.row * TALENT_POINTS_PER_ROW} points in ${tree.name} Talents`));
+  }
+  if (rank < talent.ranks.length) {
+    for (const name of state.missing) box.append(el("div", "tt-red", `Requires ${name}`));
+  }
+  if (rank > 0) box.append(el("div", "tt-description", talent.ranks[rank - 1]));
+  if (rank < talent.ranks.length) {
+    if (rank > 0) box.append(el("div", "tt-next", "Next rank:"));
+    box.append(el("div", "tt-description", talent.ranks[rank]));
+  }
+  return box;
+}
+
+// The arrows between a talent and the one it requires, over the same grid as the talents.
+function talentArrows(tree, ranks) {
+  const pitch = TALENT_CELL + TALENT_GAP;
+  const width = TALENT_COLUMNS * TALENT_CELL + (TALENT_COLUMNS - 1) * TALENT_GAP;
+  const height = TALENT_ROWS * TALENT_CELL + (TALENT_ROWS - 1) * TALENT_GAP;
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("class", "talent-arrows");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  const byId = Object.fromEntries(tree.talents.map((talent) => [talent.id, talent]));
+  const centre = (index) => index * pitch + TALENT_CELL / 2;
+  for (const talent of tree.talents) {
+    for (const id of talent.requires) {
+      const from = byId[id];
+      if (!from) continue;
+      const x1 = centre(from.col), y1 = centre(from.row), x2 = centre(talent.col), y2 = centre(talent.row);
+      let points;
+      if (from.row === talent.row) {
+        const side = x2 > x1 ? 1 : -1;
+        points = [[x1 + side * TALENT_CELL / 2, y1], [x2 - side * (TALENT_CELL / 2 + 2), y2]];
+      } else if (from.col === talent.col) {
+        points = [[x1, y1 + TALENT_CELL / 2], [x2, y2 - TALENT_CELL / 2 - 2]];
+      } else {
+        const side = x2 > x1 ? 1 : -1;
+        points = [[x1 + side * TALENT_CELL / 2, y1], [x2, y1], [x2, y2 - TALENT_CELL / 2 - 2]];
+      }
+      const done = (ranks[id] || 0) >= from.ranks.length;
+      const line = document.createElementNS(svgNS, "polyline");
+      line.setAttribute("points", points.map((point) => point.join(",")).join(" "));
+      line.setAttribute("class", done ? "talent-arrow talent-arrow-open" : "talent-arrow");
+      const [lastX, lastY] = points[points.length - 1];
+      const [beforeX, beforeY] = points[points.length - 2];
+      const dx = Math.sign(lastX - beforeX), dy = Math.sign(lastY - beforeY);
+      const head = document.createElementNS(svgNS, "polygon");
+      head.setAttribute("points", [
+        [lastX + dx * 2, lastY + dy * 2],
+        [lastX - dx * 4 - dy * 5, lastY - dy * 4 - dx * 5],
+        [lastX - dx * 4 + dy * 5, lastY - dy * 4 + dx * 5],
+      ].map((point) => point.join(",")).join(" "));
+      head.setAttribute("class", done ? "talent-head talent-arrow-open" : "talent-head");
+      svg.append(line, head);
+    }
+  }
+  return svg;
+}
+
+function renderTree(tree, spec, canSpend) {
+  const ranks = spec?.ranks || {};
+  const spent = spec?.spent || 0;
+  const panel = el("div", "ingame-panel talent-tree");
+  const head = el("div", "talent-tree-head");
+  if (tree.icon) {
+    const img = el("img", "talent-tree-icon");
+    img.alt = "";
+    setItemIcon(img, tree.icon);
+    head.append(img);
+  }
+  head.append(el("h3", null, tree.name), el("span", "talent-tree-points", String(spent)));
+  panel.append(head);
+
+  const grid = el("div", "talent-grid");
+  grid.append(talentArrows(tree, ranks));
+  const byId = Object.fromEntries(tree.talents.map((talent) => [talent.id, talent]));
+  for (const talent of tree.talents) {
+    const rank = ranks[talent.id] || 0;
+    const rowLocked = spent < talent.row * TALENT_POINTS_PER_ROW;
+    const missing = talent.requires
+      .map((id) => byId[id])
+      .filter((required) => required && (ranks[required.id] || 0) < required.ranks.length)
+      .map((required) => required.name);
+    const maxed = rank >= talent.ranks.length;
+    const open = !rowLocked && missing.length === 0;
+    const state = maxed ? "maxed" : rank > 0 ? "learned" : open && canSpend ? "open" : "locked";
+    const cell = el("div", `talent talent-${state}`);
+    cell.style.gridRow = String(talent.row + 1);
+    cell.style.gridColumn = String(talent.col + 1);
+    cell.style.setProperty("--col", String(talent.col));
+    if (talent.row >= TALENT_ROWS - 2) cell.classList.add("talent-bottom");
+    cell.tabIndex = 0; // focus (tap on a phone) also shows the tooltip
+    const img = el("img", "talent-icon");
+    img.alt = talent.name;
+    setItemIcon(img, talent.icon);
+    cell.append(img);
+    if (rank > 0 || open) cell.append(el("span", "talent-rank", `${rank}/${talent.ranks.length}`));
+    cell.append(talentTooltip(talent, rank, tree, { rowLocked, missing }));
+    grid.append(cell);
+  }
+  panel.append(grid);
+  return panel;
+}
+
+// The tree with the most points counts as the character's spec: the API does not name an active one.
+function activeSpec(character, trees) {
+  const spec = (character.talents || [])
+    .filter((entry) => entry.spent > 0)
+    .reduce((best, entry) => (!best || entry.spent > best.spent ? entry : best), null);
+  return spec && trees?.find((tree) => tree.id === spec.id);
+}
+
+function renderTalents(character, trees) {
+  if (!character.talents || !trees) return null;
+  const spent = character.talents.reduce((sum, spec) => sum + spec.spent, 0);
+  const unspent = Math.max(0, talentPoints(character.level) - spent);
+  const section = ingameSection(t("Talentek"), t("Elköltött: {spent} · El nem költött: {unspent}", { spent, unspent }));
+  const list = el("div", "talent-trees");
+  list.append(...trees.map((tree) => renderTree(tree, character.talents.find((spec) => spec.id === tree.id), unspent > 0)));
+  section.append(list);
+  return section;
+}
+
+function renderReputations(character) {
+  const reputations = character.reputations || [];
+  if (reputations.length === 0) return null;
+  const section = ingameSection(t("Hírnév"));
+  const panel = el("div", "ingame-panel reputation-panel");
+  for (const reputation of reputations) {
+    const row = el("div", "reputation");
+    row.append(el("span", "reputation-name", reputation.name));
+    const bar = el("div", `reputation-bar standing-${reputation.standing.toLowerCase()}`);
+    const fill = el("span", "reputation-fill");
+    fill.style.width = `${reputation.max ? Math.min(100, reputation.value / reputation.max * 100) : 100}%`;
+    const text = reputation.max ? `${reputation.standing} ${reputation.value}/${reputation.max}` : reputation.standing;
+    bar.append(fill, el("span", "reputation-text", text));
+    row.append(bar);
+    panel.append(row);
+  }
+  section.append(panel);
+  return section;
+}
+
 // A row with text on the left and optional text on the right, like "Chest      Mail".
 function tooltipRow(left, right, className) {
   const row = el("div", `tt-row${className ? ` ${className}` : ""}`);
@@ -197,7 +446,7 @@ function itemTooltip(item) {
   return box;
 }
 
-function renderCharacter(container, character, gameData) {
+function renderCharacter(container, character, gameData, talentTrees) {
   const cls = gameData.classes[character.class] || { name: character.class, color: null };
   const raceName = gameData.races[character.race] || character.race;
   const gender = character.gender === "female" ? "female" : "male";
@@ -217,12 +466,19 @@ function renderCharacter(container, character, gameData) {
   details.append(detail(t("Frakció"), factionName ? iconWithName(`/icons/faction/${character.faction}.jpg`, factionName) : "—"));
   details.append(detail(t("Kaszt"), iconWithName(`/icons/class/${character.class}.jpg`, cls.name)));
   details.append(detail(t("Szint"), String(character.level)));
+  const trees = talentTrees?.[character.class];
+  const spec = activeSpec(character, trees);
+  details.append(detail(t("Aktív spec"), spec?.name || "—"));
+  const fullName = `${character.name} ${character.surname}`;
+  details.append(detail(t("Titulus"), character.title ? character.title.replace("{name}", fullName) : "—"));
   details.append(detail(t("Faj"), iconWithName(`/icons/race/${character.race}_${gender}.jpg`, raceName)));
 
   const professions = (character.professions || []).filter((key) => gameData.professions[key]);
   const professionList = el("span", "icon-list-names");
   for (const key of professions) {
-    professionList.append(iconWithName(`/icons/profession/${key}.jpg`, gameData.professions[key].name));
+    const skill = character.professionSkills?.[key];
+    const label = skill ? `${gameData.professions[key].name} ${skill.points}/${skill.max}` : gameData.professions[key].name;
+    professionList.append(iconWithName(`/icons/profession/${key}.jpg`, label));
   }
   details.append(detail(t("Szakmák"), professions.length ? professionList : "—"));
 
@@ -232,7 +488,19 @@ function renderCharacter(container, character, gameData) {
   details.append(detail(t("Utolsó belépés"), character.lastLogin ? relativeTime(character.lastLogin) : "—"));
   card.append(details);
 
-  container.replaceChildren(card, renderGear(character));
+  const sections = [card, renderGear(character), renderStats(character), renderTalents(character, trees), renderReputations(character)];
+  container.replaceChildren(...sections.filter(Boolean));
+}
+
+// Loaded once per page; without it the page still works, just with no talent trees.
+let talentTreesRequest = null;
+function loadTalentTrees() {
+  talentTreesRequest ??= fetchJson("/talent-trees.json").catch((error) => {
+    console.error("Failed to load the talent trees", error);
+    talentTreesRequest = null;
+    return null;
+  });
+  return talentTreesRequest;
 }
 
 async function main() {
@@ -241,15 +509,15 @@ async function main() {
 
   async function load({ keepOnError = false } = {}) {
     try {
-      const [gameData, characters] = await Promise.all([loadGameData(), loadCharacters()]);
+      const [gameData, characters, talentTrees] = await Promise.all([loadGameData(), loadCharacters(), loadTalentTrees()]);
       const character = characters.find((c) => c.id === id);
       if (!character) {
         container.replaceChildren(el("p", "empty", t("Ez a karakter nincs a listán.")));
         return;
       }
-      // Don't redraw under an open item tooltip; the next refresh catches up.
-      if (keepOnError && container.querySelector(".gear-item:hover, .gear-item:focus")) return;
-      renderCharacter(container, character, gameData);
+      // Don't redraw under an open tooltip; the next refresh catches up.
+      if (keepOnError && container.querySelector(".gear-item:hover, .gear-item:focus, .talent:hover, .talent:focus")) return;
+      renderCharacter(container, character, gameData, talentTrees);
     } catch (error) {
       console.error("Failed to load the character", error);
       if (!keepOnError) container.replaceChildren(el("p", "empty", t("Nem sikerült betölteni a karaktert.")));
