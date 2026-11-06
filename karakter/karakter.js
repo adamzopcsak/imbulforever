@@ -1,4 +1,4 @@
-// Character page: everything from the list plus the gear, stats, talents and reputations (from the Blizzard API).
+// Character page: everything from the list plus the gear, stats, talents, reputations and mounts (from the Blizzard API).
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -405,6 +405,28 @@ function renderReputations(character) {
   return section;
 }
 
+// The rows of the in-game mount list. The API has no mount icons, so the picture of the mount stands in for them.
+function renderMounts(character) {
+  const mounts = character.mounts;
+  if (!mounts) return null;
+  const section = ingameSection(t("Mountok"), mounts.length ? String(mounts.length) : undefined);
+  const panel = el("div", "ingame-panel mount-panel");
+  if (mounts.length === 0) panel.append(el("p", "mount-none", t("Még nincs mountja.")));
+  for (const mount of mounts) {
+    const row = el("div", mount.useable ? "mount" : "mount mount-unusable");
+    if (!mount.useable) row.title = t("Ezzel a karakterrel nem használható.");
+    const img = el("img", "mount-image");
+    img.alt = "";
+    setItemIcon(img, mount.image);
+    const frame = el("span", "mount-frame");
+    frame.append(img);
+    row.append(frame, el("span", "mount-name", mount.name));
+    panel.append(row);
+  }
+  section.append(panel);
+  return section;
+}
+
 // A row with text on the left and optional text on the right, like "Chest      Mail".
 function tooltipRow(left, right, className) {
   const row = el("div", `tt-row${className ? ` ${className}` : ""}`);
@@ -488,7 +510,7 @@ function renderCharacter(container, character, gameData, talentTrees) {
   details.append(detail(t("Utolsó belépés"), character.lastLogin ? relativeTime(character.lastLogin) : "—"));
   card.append(details);
 
-  const sections = [card, renderGear(character), renderStats(character), renderTalents(character, trees), renderReputations(character)];
+  const sections = [card, renderGear(character), renderStats(character), renderTalents(character, trees), renderReputations(character), renderMounts(character)];
   container.replaceChildren(...sections.filter(Boolean));
 }
 

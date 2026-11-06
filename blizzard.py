@@ -81,6 +81,12 @@ class BlizzardClient:
         return f"/profile/wow/character/{slug}"
 
 
+def namespace_of(reference: dict | None) -> str:
+    """The namespace in the link of an API reference like {"key": {"href": "...?namespace=..."}}."""
+    href = ((reference or {}).get("key") or {}).get("href", "")
+    return urllib.parse.parse_qs(urllib.parse.urlparse(href).query).get("namespace", [""])[0]
+
+
 def fields_from_profile(profile: dict, game_data: dict) -> dict:
     """Map a Blizzard character profile to our character fields; unknown values are left out."""
     fields = {"lastLogin": iso_from_millis(profile["last_login_timestamp"])} if profile.get("last_login_timestamp") else {}
@@ -134,9 +140,7 @@ def equipment_from_response(response: dict) -> list:
             "slotName": slot.get("name", ""),
             "itemId": (item.get("item") or {}).get("id"),
             "mediaId": (item.get("media") or {}).get("id"),
-            "mediaNamespace": urllib.parse.parse_qs(
-                urllib.parse.urlparse(((item.get("media") or {}).get("key") or {}).get("href", "")).query
-            ).get("namespace", [""])[0],
+            "mediaNamespace": namespace_of(item.get("media")),
             "name": item.get("name", ""),
             "quality": ((item.get("quality") or {}).get("type") or "COMMON").lower(),
             "itemLevel": (item.get("level") or {}).get("value"),
@@ -197,7 +201,7 @@ def tooltip_from_item(item: dict) -> dict:
 
 
 class IconCache:
-    """Item icon URLs by media id, kept in a JSON file so each icon is looked up only once."""
+    """Item icon URLs by media id and mount pictures by mount id, kept in a JSON file so each is looked up only once."""
 
     def __init__(self, path):
         self.path = path
@@ -212,6 +216,17 @@ class IconCache:
             media = client.get(f"/data/wow/media/item/{media_id}", namespace)
             assets = (media or {}).get("assets", [])
             self.icons[key] = next((a["value"] for a in assets if a.get("key") == "icon"), None)
+            self._save()
+        return self.icons.get(key)
+
+    def mount_image(self, client: "BlizzardClient", mount_id, namespace: str) -> str | None:
+        key = f"mount-{mount_id}"
+        if key not in self.icons and mount_id and namespace:
+            mount = client.get(f"/data/wow/mount/{mount_id}", namespace)
+            displays = (mount or {}).get("creature_displays") or []
+            media = client.get(f"/data/wow/media/creature-display/{displays[0]['id']}", namespace) if displays else None
+            assets = (media or {}).get("assets", [])
+            self.icons[key] = next((a["value"] for a in assets if a.get("key") == "zoom"), None)
             self._save()
         return self.icons.get(key)
 
@@ -301,6 +316,23 @@ def reputations_from_response(response: dict) -> list:
     return sorted((r for r in reputations if r["name"]), key=lambda r: r["name"])
 
 
+def mounts_from_response(response: dict) -> list:
+    """Collected mounts by name: [{"id": 3111, "namespace": "static-...", "name": "...", "useable": True}].
+
+    A character without mounts gets a response with no "mounts" key at all.
+    """
+    mounts = [
+        {
+            "id": (entry.get("mount") or {}).get("id"),
+            "namespace": namespace_of(entry.get("mount")),
+            "name": (entry.get("mount") or {}).get("name", ""),
+            "useable": entry.get("is_useable", True),
+        }
+        for entry in response.get("mounts", [])
+    ]
+    return sorted((m for m in mounts if m["name"]), key=lambda m: m["name"])
+
+
 class BlizzardSync:
     """Every `interval` seconds fetch all characters; professions only every `professions_interval` seconds."""
 
@@ -374,6 +406,12 @@ class BlizzardSync:
             response = self.client.get(path + "/reputations")
             if response is not None:
                 fields["reputations"] = reputations_from_response(response)
+            response = self.client.get(path + "/collections/mounts")
+            if response is not None:
+                mounts = mounts_from_response(response)
+                for mount in mounts:
+                    mount["image"] = self.icons.mount_image(self.client, mount["id"], mount.pop("namespace"))
+                fields["mounts"] = mounts
 
         last = self._professions_fetched.get(character["id"], 0)
         if time.time() - last >= self.professions_interval:
