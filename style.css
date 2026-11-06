@@ -771,6 +771,7 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 .gear-right .item-tooltip { left: auto; right: 0; text-align: left; }
 .gear-bottom .item-tooltip { top: auto; bottom: calc(100% + 6px); }
+.gear-bottom .gear-item:last-child .item-tooltip { left: auto; right: 0; }
 
 .gear-item.has-tooltip:hover .item-tooltip,
 .gear-item.has-tooltip:focus .item-tooltip { opacity: 1; visibility: visible; }
@@ -994,3 +995,108 @@ h2 { font-size: 1.15rem; font-weight: 600; }
 
 @keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .modal-backdrop { animation: none; } }
+
+/* Stats, talents and reputations: the in-game look, the same in every theme */
+.ingame-section { margin-top: 24px; }
+
+.ingame-panel {
+  padding: 12px;
+  border: 1px solid #5c4a24;
+  border-radius: 6px;
+  background: #14110c;
+  color: #ffffff;
+}
+
+.ingame-panel h3 { margin: 0; color: #ffd100; font-size: .95rem; font-weight: 700; }
+
+.stat-bars { display: grid; gap: 4px; margin-bottom: 10px; }
+.stat-bar {
+  padding: 3px 10px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  color: #ffffff;
+  font-size: .85rem;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+}
+.stat-bar-health { background: #128c12; }
+.stat-bar-mana { background: #1f4fbf; }
+.stat-bar-rage { background: #b01414; }
+.stat-bar-energy { background: #b39a10; }
+
+.stat-panels { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.stat-panel h3 { margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px solid #3a2f17; }
+.stat-line { display: flex; justify-content: space-between; gap: 12px; font-size: .85rem; line-height: 1.6; }
+.stat-label { color: #ffd100; }
+.stat-value { font-variant-numeric: tabular-nums; }
+.stat-up { color: #1eff00; }
+.stat-down { color: #ff2020; }
+
+.talent-trees { --talent-cell: 44px; --talent-gap: 12px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.talent-tree-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.talent-tree-icon { width: 24px; height: 24px; border-radius: 4px; }
+.talent-tree-head h3 { flex: 1; }
+.talent-tree-points { color: #ffd100; font-weight: 700; }
+
+.talent-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, var(--talent-cell));
+  grid-template-rows: repeat(7, var(--talent-cell));
+  gap: var(--talent-gap);
+}
+
+.talent-arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.talent-arrow { fill: none; stroke: #55524a; stroke-width: 3; }
+.talent-head { fill: #55524a; stroke: none; }
+.talent-arrow.talent-arrow-open { stroke: #ffd100; }
+.talent-head.talent-arrow-open { fill: #ffd100; }
+
+.talent { position: relative; width: var(--talent-cell); height: var(--talent-cell); outline: none; }
+.talent:focus-visible .talent-icon { outline: 2px solid #ffffff; }
+.talent-icon { display: block; box-sizing: border-box; width: 100%; height: 100%; border-radius: 6px; border: 2px solid #3d3d3d; background: #000; }
+.talent-locked .talent-icon { filter: grayscale(1) brightness(.55); }
+.talent-open .talent-icon, .talent-learned .talent-icon { border-color: #1eff00; }
+.talent-maxed .talent-icon { border-color: #ffd100; }
+.talent-rank {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: #000;
+  color: #1eff00;
+  font-size: .72rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.talent-maxed .talent-rank { color: #ffd100; }
+
+/* As wide as the tree and over it, so that it never sticks out of the page */
+.talent .item-tooltip {
+  left: calc(var(--col) * (var(--talent-cell) + var(--talent-gap)) * -1);
+  width: calc(4 * var(--talent-cell) + 3 * var(--talent-gap));
+  max-width: none;
+  box-sizing: border-box;
+}
+.talent-bottom .item-tooltip { top: auto; bottom: calc(100% + 6px); }
+.talent:hover .item-tooltip, .talent:focus .item-tooltip { opacity: 1; visibility: visible; }
+.item-tooltip .tt-red { color: #ff2020; }
+.item-tooltip .tt-next { margin-top: 6px; color: #ffffff; }
+
+.reputation-panel { display: grid; gap: 6px; }
+.reputation { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr); align-items: center; gap: 12px; font-size: .85rem; }
+.reputation-name { color: #ffd100; }
+.reputation-bar { position: relative; height: 20px; overflow: hidden; border: 1px solid #000; border-radius: 3px; background: #2a2620; }
+.reputation-fill { position: absolute; inset: 0 auto 0 0; background: #888; }
+.reputation-text { position: absolute; inset: 0; color: #ffffff; font-size: .78rem; line-height: 18px; text-align: center; text-shadow: 0 1px 2px #000; }
+.standing-hated .reputation-fill, .standing-hostile .reputation-fill { background: #b01414; }
+.standing-unfriendly .reputation-fill { background: #c2571a; }
+.standing-neutral .reputation-fill { background: #8f7a0c; }
+.standing-friendly .reputation-fill, .standing-honored .reputation-fill, .standing-revered .reputation-fill { background: #128c12; }
+.standing-exalted .reputation-fill { background: #0e9c84; }
+
+@media (max-width: 760px) {
+  .gear-bottom .gear-item:nth-child(even) .item-tooltip { left: auto; right: 0; }
+}

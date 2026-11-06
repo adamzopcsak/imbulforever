@@ -39,7 +39,8 @@ MAX_TIP_LENGTH = 300
 FIRST_TIP = "Tudtad? Ha rákattintasz egy karakter nevére, megnézheted a gearjét."
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
-SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment", "render", "refreshedAt")
+SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "title", "equipment", "render", "stats", "talents",
+                    "reputations", "professionSkills", "refreshedAt")
 # Fields both the admin and the Blizzard sync can write. What the admin changes is listed in the character's
 # "manualFields", and the sync leaves those alone until the character's lastLogin changes (see apply_sync).
 SYNC_EDITABLE_FIELDS = ("level", "class", "race", "gender", "faction", "role", "professions")

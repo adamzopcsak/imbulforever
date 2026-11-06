@@ -79,6 +79,12 @@ const ENGLISH = {
   "← Vissza a listához": "← Back to the list",
   "Utolsó belépés": "Last login",
   "Felszerelés": "Gear",
+  "Aktív spec": "Active spec",
+  "Titulus": "Title",
+  "Statok": "Stats",
+  "Talentek": "Talents",
+  "Elköltött: {spent} · El nem költött: {unspent}": "Spent: {spent} · Unspent: {unspent}",
+  "Hírnév": "Reputation",
   "A felszerelés csak a Blizzard által ismert karaktereknél látszik: legalább 10-es szint, és a karakter azóta kilépett a játékból.":
     "Gear is only shown for characters Blizzard knows about: level 10 or higher, and logged out of the game since the API launched.",
   "Ez a karakter nincs a listán.": "This character is not on the list.",

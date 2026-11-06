@@ -87,6 +87,7 @@ def fields_from_profile(profile: dict, game_data: dict) -> dict:
 
     # Always set, so leaving a guild clears it.
     fields["guild"] = (profile.get("guild") or {}).get("name", "")
+    fields["title"] = (profile.get("active_title") or {}).get("display_string", "")
 
     level = profile.get("level")
     if isinstance(level, int) and 1 <= level <= game_data["maxLevel"]:
@@ -227,6 +228,79 @@ def professions_from_response(response: dict, game_data: dict) -> list:
     return [key for key in game_data["professions"] if key in names]
 
 
+def profession_skills_from_response(response: dict) -> dict:
+    """Skill points of the primary professions: {key: {"points": 104, "max": 150}}."""
+    skills = {}
+    for primary in response.get("primaries", []):
+        tiers = primary.get("tiers") or []
+        if tiers:
+            tier = max(tiers, key=lambda t: t.get("max_skill_points", 0))
+            skills[key_from_name((primary.get("profession") or {}).get("name", ""))] = {
+                "points": tier.get("skill_points", 0), "max": tier.get("max_skill_points", 0),
+            }
+    return skills
+
+
+def stats_from_response(response: dict) -> dict:
+    """The numbers of the in-game character sheet from the /statistics response."""
+    def percent(key):
+        return (response.get(key) or {}).get("value", 0)
+
+    def weapon(hand):
+        return {part: response.get(f"{hand}_{part}", 0) for part in ("damage_min", "damage_max", "speed", "dps")}
+
+    stats = {
+        "health": response.get("health", 0),
+        "power": response.get("power", 0),
+        "powerType": (response.get("power_type") or {}).get("name", ""),
+        "attackPower": response.get("attack_power", 0),
+        "mainHand": weapon("main_hand"),
+        "offHand": weapon("off_hand"),
+        "spellPower": response.get("spell_power", 0),
+        "manaRegen": response.get("mana_regen", 0),
+        "manaRegenCombat": response.get("mana_regen_combat", 0),
+    }
+    for key in ("strength", "agility", "stamina", "intellect", "spirit", "armor"):
+        stats[key] = response.get(key) or {"base": 0, "effective": 0}
+    for key, field in (("meleeCrit", "melee_crit"), ("rangedCrit", "ranged_crit"), ("spellCrit", "spell_crit"),
+                       ("dodge", "dodge"), ("parry", "parry"), ("block", "block")):
+        stats[key] = percent(field)
+    stats["resistances"] = {
+        school: response.get(f"{school}_resistance") or {"base": 0, "effective": 0}
+        for school in ("arcane", "fire", "nature", "frost", "shadow")
+    }
+    return stats
+
+
+def talents_from_response(response: dict) -> list:
+    """The active talent group: [{"id": spec id, "spent": 8, "ranks": {talent id: rank}}], for trees with points."""
+    groups = response.get("specialization_groups") or []
+    group = next((g for g in groups if g.get("is_active")), groups[0] if groups else {})
+    return [
+        {
+            "id": (spec.get("specialization") or {}).get("id"),
+            "spent": spec.get("spent_points", 0),
+            "ranks": {str(t["talent"]["id"]): t.get("talent_rank", 0)
+                      for t in spec.get("talents", []) if (t.get("talent") or {}).get("id")},
+        }
+        for spec in group.get("specializations", [])
+    ]
+
+
+def reputations_from_response(response: dict) -> list:
+    """Reputations by faction name: [{"name": "Ironforge", "standing": "Friendly", "value": 1012, "max": 6000}]."""
+    reputations = [
+        {
+            "name": (entry.get("faction") or {}).get("name", ""),
+            "standing": (entry.get("standing") or {}).get("name", ""),
+            "value": (entry.get("standing") or {}).get("value", 0),
+            "max": (entry.get("standing") or {}).get("max", 0),
+        }
+        for entry in response.get("reputations", [])
+    ]
+    return sorted((r for r in reputations if r["name"]), key=lambda r: r["name"])
+
+
 class BlizzardSync:
     """Every `interval` seconds fetch all characters; professions only every `professions_interval` seconds."""
 
@@ -290,6 +364,16 @@ class BlizzardSync:
             media = self.client.get(path + "/character-media")
             if media is not None and render_from_media(media):
                 fields["render"] = render_from_media(media)
+            # These only change when the character logs out, like the gear.
+            response = self.client.get(path + "/statistics")
+            if response is not None:
+                fields["stats"] = stats_from_response(response)
+            response = self.client.get(path + "/specializations")
+            if response is not None:
+                fields["talents"] = talents_from_response(response)
+            response = self.client.get(path + "/reputations")
+            if response is not None:
+                fields["reputations"] = reputations_from_response(response)
 
         last = self._professions_fetched.get(character["id"], 0)
         if time.time() - last >= self.professions_interval:
@@ -297,4 +381,5 @@ class BlizzardSync:
             self._professions_fetched[character["id"]] = time.time()
             if response is not None:
                 fields["professions"] = professions_from_response(response, self.game_data)
+                fields["professionSkills"] = profession_skills_from_response(response)
         return fields
