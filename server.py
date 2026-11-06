@@ -40,6 +40,9 @@ FIRST_TIP = "Tudtad? Ha rákattintasz egy karakter nevére, megnézheted a gearj
 
 # Fields written by the Blizzard sync, kept when the admin saves a character.
 SYNC_ONLY_FIELDS = ("lastLogin", "blizzard", "guild", "equipment", "render", "refreshedAt")
+# Fields both the admin and the Blizzard sync can write. What the admin changes is listed in the character's
+# "manualFields", and the sync leaves those alone until the character's lastLogin changes (see apply_sync).
+SYNC_EDITABLE_FIELDS = ("level", "class", "race", "gender", "faction", "role", "professions")
 # Old roleset values -> current ones.
 ROLE_MIGRATIONS = {"pve": "normal"}
 
@@ -117,11 +120,21 @@ class CharacterStore:
                 return None
             self._check_unique_name(characters, character, ignore_id=character_id)
             old = characters[index]
+            # A missing field and an empty one (e.g. no roleset) are the same to the admin form.
+            differs = lambda key: (old.get(key) or None) != (character.get(key) or None)
             # Only a real change counts as an update; saving the same data keeps the old time.
-            changed = any(old.get(key) != value for key, value in character.items())
+            changed = any(differs(key) for key in character)
             updated_at = utc_now() if changed else old.get("updatedAt")
             sync_fields = {key: old[key] for key in SYNC_ONLY_FIELDS if key in old}
             characters[index] = {"id": character_id, **character, **sync_fields}
+            if changed and old.get("blizzard"):
+                characters[index]["refreshedAt"] = utc_now()  # the list shows this time for Blizzard characters
+            # Without a lastLogin there is nothing to wait for: Blizzard's first data simply takes over.
+            if old.get("lastLogin"):
+                kept = old.get("manualFields", [])
+                manual = [key for key in SYNC_EDITABLE_FIELDS if key in kept or differs(key)]
+                if manual:
+                    characters[index]["manualFields"] = manual
             # When the character reached its current level; used to order characters of the same level.
             level_reached = utc_now() if old.get("level") != character["level"] else old.get("levelReachedAt")
             if level_reached:
@@ -140,6 +153,16 @@ class CharacterStore:
                 fields = updates.get(c.get("id"))
                 if not fields:
                     continue  # deleted meanwhile, or nothing from Blizzard
+                # An unchanged lastLogin means Blizzard has nothing newer than what the admin saw, so the manual
+                # values stay. A new one means the character has logged out since, and Blizzard's data is fresh.
+                # (lastLogin is the login time of the session, so it can't be compared to the time of the edit.)
+                manual = c.get("manualFields")
+                if manual:
+                    if "lastLogin" in fields and fields["lastLogin"] != c.get("lastLogin"):
+                        del c["manualFields"]
+                        changed = True
+                    else:
+                        fields = {key: value for key, value in fields.items() if key not in manual}
                 game_changed = any(c.get(k) != v for k, v in fields.items() if k not in SYNC_ONLY_FIELDS)
                 if "level" in fields and c.get("level") != fields["level"]:
                     c["levelReachedAt"] = utc_now()
